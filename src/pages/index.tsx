@@ -260,7 +260,7 @@ export default function Home() {
         <meta property="og:image" content={`${WebsiteURL}/og.jpg`} />
       </Head>
       <Navbar />
-      <div className="md:flex md:flex-row md:row-span-2 items-center justify-center h-[87vh]">
+      <div className="md:flex md:flex-row md:row-span-2 items-center justify-center h-[100vh] mt-14 md:mt-0">
         <div className='flex justify-center mx-auto w-full md:w-1/2'>
           <div className='flex flex-col col-span-2 md:gap-y-14 gap-x-10 md:mx-32 mx-4'>
             <div className='md:order-1 order-2 md:pl-40 md:py-0 py-5'>
@@ -351,7 +351,7 @@ export default function Home() {
                           className="w-full text-sm rounded-md px-2 py-2  hover:outline-2 outline-8 border border-white bg-bg/50 flex justify-between items-center"
                           onClick={() => handleBotNbrMenu()}
                         >
-                          <div>{botNbr ? `${botNbr} Bots` : 'Number of Bots'}</div>
+                          <div>{botNbr == '1' ? `${botNbr} Bot` : `${botNbr} Bots`}</div>
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff" className="w-3 h-3">
                             <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
                           </svg>
@@ -359,21 +359,25 @@ export default function Home() {
                         {isBotMenuOpen && (
                           <div className="absolute mt-0 w-full rounded-md shadow-lg bg-green/95 z-10">
                             <ul className='p-0.5 mx-0.5 text-[#000] font-[300] sm:text-sm text-xs'>
-                              <li onClick={() => handleBotNbr('5')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${botNbr == '5' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>5 Bots</span>
+                              <li onClick={() => handleBotNbr('1')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${botNbr == '1' ? 'bg-white' : 'hover:bg-white'}`}>
+                                <span>1 Bot</span>
                                 <span>(Free)</span>
+                              </li>
+                              <li onClick={() => handleBotNbr('5')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${botNbr == '5' ? 'bg-white' : 'hover:bg-white'}`}>
+                                <span>5 Bots</span>
+                                <span>(0.5 SOL)</span>
                               </li>
                               <li onClick={() => handleBotNbr('10')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${botNbr == '10' ? 'bg-white' : 'hover:bg-white'}`}>
                                 <span>10 Bots</span>
-                                <span>(0.5 SOL)</span>
+                                <span>(1 SOL)</span>
                               </li>
                               <li onClick={() => handleBotNbr('20')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${botNbr == '20' ? 'bg-white' : 'hover:bg-white'}`}>
                                 <span>20 Bots</span>
-                                <span>(1 SOL)</span>
+                                <span>(2 SOL)</span>
                               </li>
                               <li onClick={() => handleBotNbr('50')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${botNbr == '50' ? 'bg-white' : 'hover:bg-white'}`}>
                                 <span>50 Bots</span>
-                                <span>(2 SOL)</span>
+                                <span>(3.5 SOL)</span>
                               </li>
                             </ul>
                           </div>

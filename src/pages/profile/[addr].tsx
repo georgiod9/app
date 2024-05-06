@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { WebsiteName, WebsiteSlogan, WebsiteURL } from '@/constants'
 import Navbar from '@/components/navbar'
-import Insight from '@/components/insight'
+// import Insight from '@/components/insight'
 import { useWallet } from '@solana/wallet-adapter-react';
 
 const Profile = () => {
@@ -42,7 +42,7 @@ const Profile = () => {
                 <meta property="og:image" content={`${WebsiteURL}/og.jpg`} />
             </Head>
             <Navbar />
-            <div className="md:flex md:flex-row md:row-span-2 items-center justify-center h-[87vh]">
+            <div className="md:flex md:flex-row md:row-span-2 items-center justify-center h-[100vh] mt-20 md:mt-0">
                 <div className='flex justify-center mx-auto w-full md:w-1/2 pt-2 pb-5'>
                     <div id='bump-form' className='bg-[#2E303A] rounded-md md:w-[60%] w-full mx-4'>
                         <div className='mx-4 mt-3 mb-5'>
