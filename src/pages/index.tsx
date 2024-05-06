@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { WebsiteName, WebsiteSlogan, WebsiteURL } from '@/constants';
 import Navbar from '@/components/navbar';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Spinner from '@/utils/spinner';
 import Insight from '@/components/insight';
 import { Switch } from '@headlessui/react'
@@ -75,8 +75,10 @@ export default function Home() {
   const initMin = 0.001
   const initMax = 1.000
   const scaleFactor = 1000
-
   const [range, setRange] = useState([initMin, initMax])
+
+  const [serviceFee, setServiceFee] = useState(0)
+  const [totalPrice, setTotalPrice] = useState(0)
 
   async function searchContract(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const token = e.target.value
@@ -206,20 +208,78 @@ export default function Home() {
 
   const sliderValues = range.map(convertToSliderValue)
 
-  const calcFunding = () => {
-    const sum = '10'
-    return <span>{sum}</span>
+  const calcFunding = (funding: string, bot: string) => {
+    if (funding == '') { return 'Not set' }
+    let fundNbr = parseInt(funding, 10)
+    let botNbr = parseInt(bot, 10)
+    console.log(fundNbr, botNbr)
+    if (fundNbr < (0.1 * botNbr)) {
+      return <>
+        <span className='flex justify-center items-center'>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="text-red w-3 h-3">
+            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+          </svg>
+          <span className='pl-1.5'>Too low</span>
+        </span>
+      </>
+    } else {
+      return <span>{fundNbr.toString()} SOL</span>
+    }
   }
 
-  const calcServicesFees = () => {
-    const sum = '2'
-    return <span>{sum}</span>
+  const calcServicesFees = (bot: string, frequency: string, expiry: string) => {
+    let botfee = 0
+    if (bot == '5') {
+      botfee += 0.5
+    } else if (bot == '10') {
+      botfee += 1
+    } else if (bot == '20') {
+      botfee += 2
+    } else if (bot == '50') {
+      botfee += 3.5
+    } else {
+      botfee + 0
+    }
+    let frequencyfee = 0
+    if (frequency == '15') {
+      frequencyfee += 0.5
+    } else if (frequency == '5') {
+      frequencyfee += 1
+    } else (
+      frequencyfee += 0
+    )
+    let expiryfee = 0
+    if (expiry == '48') {
+      expiryfee += 0.5
+    } else if (expiry == '168') {
+      expiryfee += 3
+    } else {
+      expiryfee += 0
+    }
+    let totalfee = (botfee + frequencyfee + expiryfee)
+    setServiceFee(totalfee)
+    return { totalfee }
   }
 
-  const calcTotal = () => {
-    const sum = '12'
-    return <span>{sum}</span>
+  useEffect(() => {
+    calcServicesFees(botNbr, frequency, expiry)
+  }, [botNbr, frequency, expiry])
+
+  const calcTotal = (funding: string, serviceFee: number) => {
+    let fundNbr = parseInt(funding, 10)
+    if (funding == '') {
+      setTotalPrice(0)
+      return 0
+    } else {
+      let total = (fundNbr + serviceFee)
+      setTotalPrice(total)
+      return { total }
+    }
   }
+
+  useEffect(() => {
+    calcTotal(funding, serviceFee)
+  }, [funding, serviceFee])
 
   const ConnectModalRef = useRef<ConnectModalRefType>(null)
   const [isConnectModalOpen, setConnectModalOpen] = useState(false)
@@ -575,7 +635,9 @@ export default function Home() {
                     <span className='text-[#FFF] font-[400] text-sm'>Funding (redeemable)</span>
                   </div>
                   <div className='flex'>
-                    <span className='text-red text-sm'>{calcFunding()} SOL</span>
+                    <span className='text-red text-sm'>
+                      {calcFunding(funding, botNbr)}
+                    </span>
                   </div>
                 </div>
                 <div className='flex justify-between mx-auto my-1'>
@@ -583,17 +645,22 @@ export default function Home() {
                     <span className='text-[#FFF] font-[400] text-sm'>Services</span>
                   </div>
                   <div className='flex'>
-                    <span className='text-red text-sm'>{calcServicesFees()} SOL</span>
+                    <span className='text-red text-sm'>{serviceFee == 0 ? 'Free' : <>{serviceFee} SOL</>}</span>
                   </div>
                 </div>
-                <div className='flex justify-between mx-auto my-1'>
-                  <div className='flex'>
-                    <span className='text-[#FFF] font-[600] text-sm'>Total:</span>
+                {totalPrice == 0 ? null : <>
+                  <div className='py-2'>
+                    <div className='border-t-[1px] border-[#FFFFFF1A]' />
                   </div>
-                  <div className='flex'>
-                    <span className='text-red text-sm'>{calcTotal()} SOL</span>
+                  <div className='flex justify-between mx-auto my-1'>
+                    <div className='flex'>
+                      <span className='text-[#FFF] font-[600] text-sm'>Total:</span>
+                    </div>
+                    <div className='flex'>
+                      <span className='text-red text-sm'>{totalPrice} SOL</span>
+                    </div>
                   </div>
-                </div>
+                </>}
               </div>
               <div className='mx-1 mt-1 mb-2.5'>
                 <button onClick={() => bump(tokenContract, botNbr, frequency, expiry, assignNames, reply)} className='text-bg bg-green w-full rounded-md py-2 hover:opacity-80'>Start Bumping</button>
