@@ -58,7 +58,7 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
             <div ref={ref} className={`modal ${showModal ? 'block' : 'hidden'}`}>
                 <>
                     <>
-                        <div id='mobile-login'>
+                        <div id='mobile-signout'>
                             <div className={`sm:hidden fixed inset-0 z-50 backdrop-blur-sm backdrop-filter bg-[#000] bg-opacity-50`} />
                             <div className={`sm:hidden fixed inset-0 flex items-center justify-center z-50 backdrop-filter backdrop-opacity-70 ${showModal ? 'slide-in' : ''}`}>
                                 <div className="bg-bg w-full max-w-md mx-auto rounded-xl shadow-lg text-center pb-2.5">
@@ -80,6 +80,9 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                                                     <div className='mt-5 mb-2'>
                                                         <button onClick={() => quit()} className='text-bg bg-white w-full rounded-md text-[16px] py-2 hover:opacity-80'>Disconnect Wallet</button>
                                                     </div>
+                                                    {/* {router.pathname.startsWith('/profile') ? <></> : <>
+                                                        <span onClick={() => router.push(`/profile/${addr}`)} className='pt-1 font-light hover:text-white/80 text-sm w-full justify-center mx-0 flex'>[View Profile]</span>
+                                                    </>} */}
                                                 </div>
                                             </div>
                                         </div>
@@ -87,7 +90,7 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                                 </div>
                             </div>
                         </div>
-                        <div id='desktop-login'>
+                        <div id='desktop-signout'>
                             <div className={`sm:fixed inset-0 z-50 backdrop-blur-sm backdrop-filter bg-[#000] bg-opacity-50`} />
                             <div className={`hidden sm:absolute inset-0 sm:flex items-center justify-center z-50 backdrop-filter backdrop-opacity-70 ${showModal ? 'slide-in h-screen' : ''}`}>
                                 <div className="bg-bg w-full max-w-md mx-auto rounded-xl shadow-lg text-center pb-2.5 border border-bg/50">
@@ -109,6 +112,9 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                                                     <div className='mt-5 mb-2'>
                                                         <button onClick={() => quit()} className='text-bg bg-white w-full rounded-md text-[16px] py-2 hover:opacity-80'>Disconnect Wallet</button>
                                                     </div>
+                                                    {/* {router.pathname.startsWith('/profile') ? <></> : <>
+                                                        <span onClick={() => router.push(`/profile/${addr}`)} className='pt-1 font-light hover:text-white/80 text-sm w-full justify-center mx-0 flex'>[View Profile]</span>
+                                                    </>} */}
                                                 </div>
                                             </div>
                                         </div>

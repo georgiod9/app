@@ -5,6 +5,7 @@ package-lock.json
 .env.local
 /assets
 /clean
+contractTX.tsx
 
 # dependencies
 /node_modules

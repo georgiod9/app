@@ -431,3 +431,16 @@ select::after {
   margin-top: 0;
   overflow: visible;
 }
+
+
+.hover-modal {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-38%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #FDA5A5;
+}

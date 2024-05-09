@@ -4,14 +4,13 @@ import Navbar from '@/components/navbar';
 import { useState, useRef, useEffect } from 'react';
 import Spinner from '@/utils/spinner';
 import Insight from '@/components/insight';
-import { Switch } from '@headlessui/react'
+//import { Switch } from '@headlessui/react'
 import Image from 'next/image';
 import ConnectModal from '@/components/modals/connect';
-import { solana } from '@/constants';
+//import { solana } from '@/constants';
 import { useWallet, type Wallet } from '@solana/wallet-adapter-react';
 import QModal from '@/components/modals/hover';
 import Slider from 'rc-slider';
-//import 'rc-slider/assets/index.css';
 
 type ConnectModalRefType = HTMLDivElement | null
 type CoinData = {
@@ -68,7 +67,14 @@ export default function Home() {
 
   const { connected, publicKey } = useWallet()
 
-  const [QModalTokenOpen, setQModalOpen] = useState(false)
+  const [QModalTokenOpen0, setQModalOpen0] = useState(false)
+  const [QModalTokenOpen1, setQModalOpen1] = useState(false)
+  const [QModalTokenOpen2, setQModalOpen2] = useState(false)
+  const [QModalTokenOpen3, setQModalOpen3] = useState(false)
+  const [QModalTokenOpen4, setQModalOpen4] = useState(false)
+  const [QModalTokenOpen5, setQModalOpen5] = useState(false)
+  const [QModalTokenOpen6, setQModalOpen6] = useState(false)
+  const [QModalTokenOpen7, setQModalOpen7] = useState(false)
 
   const minDecimal = 0.001
   const maxDecimal = 2.000
@@ -79,6 +85,9 @@ export default function Home() {
 
   const [serviceFee, setServiceFee] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
+
+  const [fundingNotSet, setFundingNotSet] = useState(false)
+  const [fundingTooLow, setFundingTooLow] = useState(false)
 
   async function searchContract(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const token = e.target.value
@@ -100,11 +109,9 @@ export default function Home() {
           throw new Error(`Error from pump.fun => ${res.status}`)
         }
         const data = await res.json()
-        console.log('Coin =>', data)
         setTokenSearching(false)
         setTokenData(data)
         setTokenFound(true)
-        console.log(tokenData?.coinData.name)
       } catch (e) {
         console.error(e)
         setTokenError('Invalid token address.')
@@ -186,7 +193,10 @@ export default function Home() {
   function setFundingAmount(e: React.ChangeEvent<HTMLInputElement>) {
     const fund = e.target.value
     const fundNbr = fund.replace(/[^0-9.]/g, '')
+    const dot = fundNbr.split('.').length - 1
     if (fund !== fundNbr) {
+      return null
+    } else if (dot > 1) {
       return null
     } else {
       setFunding(fundNbr)
@@ -209,11 +219,22 @@ export default function Home() {
   const sliderValues = range.map(convertToSliderValue)
 
   const calcFunding = (funding: string, bot: string) => {
-    if (funding == '') { return 'Not set' }
-    let fundNbr = parseInt(funding, 10)
-    let botNbr = parseInt(bot, 10)
-    console.log(fundNbr, botNbr)
+    if (funding == '' || funding == '0') {
+      if (!fundingNotSet) {
+        setFundingNotSet(true)
+      }
+      return 'Not set'
+    } else {
+      if (fundingNotSet) {
+        setFundingNotSet(false)
+      }
+    }
+    let fundNbr = parseFloat(funding)
+    let botNbr = parseFloat(bot)
     if (fundNbr < (0.1 * botNbr)) {
+      if (!fundingTooLow) {
+        setFundingTooLow(true)
+      }
       return <>
         <span className='flex justify-center items-center'>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="text-red w-3 h-3">
@@ -223,6 +244,12 @@ export default function Home() {
         </span>
       </>
     } else {
+      if (fundingNotSet) {
+        setFundingNotSet(false)
+      }
+      if (fundingTooLow) {
+        setFundingTooLow(false)
+      }
       return <span>{fundNbr.toString()} SOL</span>
     }
   }
@@ -266,7 +293,7 @@ export default function Home() {
   }, [botNbr, frequency, expiry])
 
   const calcTotal = (funding: string, serviceFee: number) => {
-    let fundNbr = parseInt(funding, 10)
+    let fundNbr = parseFloat(funding)
     if (funding == '') {
       setTotalPrice(0)
       return 0
@@ -288,20 +315,31 @@ export default function Home() {
     setConnectModalOpen(prevState => !prevState)
   }
 
-  function openQModal() {
-    setQModalOpen(true)
-  }
-
-  function closeQModal() {
-    setQModalOpen(false)
-  }
-
   function bump(tokenContract: string, botNbr: string, frequency: string, expiry: string, assignNames: boolean, reply: boolean) {
     if (!connected && !publicKey) {
       handleConnectModal()
     } else {
-      //TODO 
+      if (tokenFound == false) {
+        alert('Invalid token address.')
+      } else if (botNbr !== '1' && botNbr !== '5' && botNbr !== '10' && botNbr !== '20' && botNbr !== '50') {
+        alert('Invalid bots number.')
+      } else if (frequency !== '30' && frequency !== '15' && frequency !== '5') {
+        alert('Invalid frequency.')
+      } else if (expiry !== '168' && expiry !== '48' && expiry !== '24') {
+        alert('Invalid expiry.')
+      } else if (fundingNotSet) {
+        alert('Funding not set.')
+      } else if (fundingTooLow) {
+        alert('Funding too low.')
+      } else {
+        createOrder(tokenContract, botNbr, frequency, expiry, assignNames, reply)
+      }
     }
+  }
+
+  async function createOrder(tokenContract: string, botNbr: string, frequency: string, expiry: string, assignNames: boolean, reply: boolean) {
+    alert(`ok, client: ${publicKey}, token: ${tokenContract}, bot: ${parseFloat(botNbr)}, freq: ${parseFloat(frequency)}, expiry: ${parseFloat(expiry)}, range: ${range[0].toFixed(3)}-${range[1].toFixed(2)}, naming: ${assignNames}, reply: ${reply}, serviceFee: ${serviceFee}`)
+    // TODO - createOrder() - SPLIT FUNDING/FEE?
   }
 
   return (
@@ -341,13 +379,15 @@ export default function Home() {
                 <div className='flex font-[400]'>
                   <span className='text-[#FFFFFF80] text-xs md:text-sm'>Token address</span>
                   <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                  {QModalTokenOpen && <QModal text='test' />}
-                  <svg
-                    onMouseEnter={openQModal}
-                    onMouseLeave={closeQModal}
-                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                  </svg>
+                  <div className='relative'>
+                    {QModalTokenOpen0 && <QModal text='Enter your pump.fun SPL token address.' w={155} />}
+                    <svg
+                      onMouseEnter={() => setQModalOpen0(true)}
+                      onMouseLeave={() => setQModalOpen0(false)}
+                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
                 <div id='token-input' className='flex justify-start mt-1'>
                   <div className='relative w-full'>
@@ -401,9 +441,15 @@ export default function Home() {
                     <div className='flex font-[400]'>
                       <span className='text-[#FFFFFF80] text-xs md:text-sm'>Number of Bots</span>
                       <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                      </svg>
+                      <div className='relative'>
+                        {QModalTokenOpen1 && <QModal text='Create a number of bots to keep your token on the bump front page.' w={185} />}
+                        <svg
+                          onMouseEnter={() => setQModalOpen1(true)}
+                          onMouseLeave={() => setQModalOpen1(false)}
+                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                        </svg>
+                      </div>
                     </div>
                     <div id='bot-nbr-input' className='flex justify-start mt-1'>
                       <div className='relative w-full'>
@@ -447,9 +493,15 @@ export default function Home() {
                     <div className='flex mt-2.5 font-[400]'>
                       <span className='text-[#FFFFFF80] text-xs md:text-sm'>Expiry</span>
                       <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                      </svg>
+                      <div className='relative'>
+                        {QModalTokenOpen2 && <QModal text='Bots are costly, so we expire them after a while.' w={205} />}
+                        <svg
+                          onMouseEnter={() => setQModalOpen2(true)}
+                          onMouseLeave={() => setQModalOpen2(false)}
+                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                        </svg>
+                      </div>
                     </div>
                     <div id='expiration-input' className='flex justify-start mt-1'>
                       <div className='relative w-full'>
@@ -487,9 +539,15 @@ export default function Home() {
                     <div className='flex font-[400]'>
                       <span className='text-[#FFFFFF80] text-xs md:text-sm'>Frequency</span>
                       <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                      </svg>
+                      <div className='relative'>
+                        {QModalTokenOpen3 && <QModal text='How often do you want the bots to buy, note that each bot will buy on a different timing from the other to keep your token Bumping.' w={215} />}
+                        <svg
+                          onMouseEnter={() => setQModalOpen3(true)}
+                          onMouseLeave={() => setQModalOpen3(false)}
+                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                        </svg>
+                      </div>
                     </div>
                     <div id='frequency-input' className='flex justify-start mt-1'>
                       <div className='relative w-full'>
@@ -525,9 +583,15 @@ export default function Home() {
                     <div className='flex mt-2.5 font-[400]'>
                       <span className='text-[#FFFFFF80] text-xs md:text-sm'>Fund Bots</span>
                       <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                      </svg>
+                      <div className='relative'>
+                        {QModalTokenOpen4 && <QModal text='Fund your bots with SOL to trade your token. You can withdraw the funds at any time.' w={240} />}
+                        <svg
+                          onMouseEnter={() => setQModalOpen4(true)}
+                          onMouseLeave={() => setQModalOpen4(false)}
+                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                        </svg>
+                      </div>
                     </div>
                     <div id='funding-input' className='flex justify-start mt-1'>
                       <div className='relative w-full'>
@@ -549,9 +613,15 @@ export default function Home() {
                 <div className='flex mt-2.5 font-[400]'>
                   <span className='text-[#FFFFFF80] text-xs md:text-sm'>Buy Range</span>
                   <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                  </svg>
+                  <div className='relative'>
+                    {QModalTokenOpen5 && <QModal text='The minimum random buy/sell range for each trade is 0.001 SOL and the maximum is an equation. (Funds/Bots)' w={225} />}
+                    <svg
+                      onMouseEnter={() => setQModalOpen5(true)}
+                      onMouseLeave={() => setQModalOpen5(false)}
+                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
                 <div className='flex w-full mt-1'>
                   <span className='text-[#FFFFFF80] text-xs sm:text-sm flex justify-start mx-0 w-[10%]'>Min</span>
@@ -585,12 +655,19 @@ export default function Home() {
                 <div className='flex justify-between mx-auto'>
                   <div className='flex font-[400]'>
                     <span className='text-[#FFFFFF80] text-xs md:text-sm'>Assign names to wallets</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                    </svg>
+                    <div className='relative'>
+                      {QModalTokenOpen6 && <QModal text='The system generate names to the bots to look more legit.' w={220} />}
+                      <svg
+                        onMouseEnter={() => setQModalOpen6(true)}
+                        onMouseLeave={() => setQModalOpen6(false)}
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                      </svg>
+                    </div>
                   </div>
                   <div className='flex font-[400]'>
-                    <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
+                    <span className='text-yellow text-xs md:text-sm'>Coming soon</span>
+                    {/* <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
                     <Switch
                       checked={assignNames}
                       onChange={setAssignNames}
@@ -602,18 +679,25 @@ export default function Home() {
                         className={`${assignNames ? 'translate-x-[16px] sm:translate-x-[20px]' : 'translate-x-[1px] sm:translate-x-[2px]'
                           } inline-block h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] transform rounded-full bg-bg transition`}
                       />
-                    </Switch>
+                    </Switch> */}
                   </div>
                 </div>
                 <div className='flex justify-between mx-auto mt-2.5'>
                   <div className='flex font-[400]'>
                     <span className='text-[#FFFFFF80] text-xs md:text-sm'>Reply to token profile</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                    </svg>
+                    <div className='relative'>
+                      {QModalTokenOpen7 && <QModal text='Bots reply automatically to the pump dot fun token profile. Make it more legit.' w={220} />}
+                      <svg
+                        onMouseEnter={() => setQModalOpen7(true)}
+                        onMouseLeave={() => setQModalOpen7(false)}
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                      </svg>
+                    </div>
                   </div>
                   <div className='flex font-[400]'>
-                    <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
+                    <span className='text-yellow text-xs md:text-sm'>Coming soon</span>
+                    {/* <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
                     <Switch
                       checked={reply}
                       onChange={setReply}
@@ -625,7 +709,7 @@ export default function Home() {
                         className={`${reply ? 'translate-x-[16px] sm:translate-x-[20px]' : 'translate-x-[1px] sm:translate-x-[2px]'
                           } inline-block h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] transform rounded-full bg-bg transition`}
                       />
-                    </Switch>
+                    </Switch> */}
                   </div>
                 </div>
               </div>
@@ -670,7 +754,7 @@ export default function Home() {
         </div>
       </div>
       <>
-        {isConnectModalOpen && <> <ConnectModal showModal={isConnectModalOpen} closeModal={handleConnectModal} ref={ConnectModalRef} /></>}
+        {isConnectModalOpen && <><ConnectModal showModal={isConnectModalOpen} closeModal={handleConnectModal} ref={ConnectModalRef} /></>}
       </>
     </>
   );

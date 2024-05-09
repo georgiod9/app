@@ -2,20 +2,17 @@
 
 ### Main
 
-- connect to contract
-- Range selector (equation)
-- Hover ? btns
-- Tablet display opt.
-- fix min funding decimals
+- connect contract (createOrder/getOrderForAddress/cancelOrder)
+- Range selector (equation)???
 --
 - assign names to wallets => check pumpfun api possibilities
 - reply to token profile => check pumpfun api possibilities
+--
+- Tablet display opt.
 
 ### Profile PAGE
 
-- map orders
-- Status Modal
-- EditModal
+- Status Modal - DB?
 - Mobile: CreateBumpModal
 
 ## Figma

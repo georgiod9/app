@@ -1,18 +1,23 @@
 import { forwardRef } from 'react';
 
 interface QModalProps {
-    text: string
+    text: string;
+    w: number;
 }
 
-const QModal = forwardRef<HTMLDivElement, QModalProps>(({ text }, ref) => {
-
+const QModal = forwardRef<HTMLDivElement, QModalProps>(({ text, w }, ref) => {
     return (
         <>
-            <div className="absolute w-fit h-fit bg-red rounded-lg bg-opacity-100 z-50 flex justify-center items-center">
-                <p className="text-[#0d0d0d] text-xs font-[400] p-1">{text}</p>
+            <div
+                ref={ref}
+                className={`absolute  bg-red rounded-lg bg-opacity-100 z-50 p-2 text-xs text-[#0d0d0d] font-[350]`}
+                style={{ width: `${w}px`, left: '50%', transform: 'translateX(-50%)', bottom: 'calc(100% + 0.5rem)' }}
+            >
+                {text}
             </div>
+            <div className='hover-modal' />
         </>
-    )
-})
+    );
+});
 
 export default QModal
