@@ -68,7 +68,7 @@ const Profile = () => {
     async function loadBumpers(addr: any) {
         setTimeout(() => {
             setBumpDataLoaded(true)
-            setBumpData(orderDataExample)
+            // setBumpData(orderDataExample)
             // TODO - getOrderForAddress(addr)
         }, 500)
     }

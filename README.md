@@ -13,6 +13,7 @@
 ### Profile PAGE
 
 - Status Modal - DB?
+- Withdraw -> Cancel?
 - Mobile: CreateBumpModal
 
 ## Figma
