@@ -63,7 +63,7 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                             <div className={`sm:hidden fixed inset-0 flex items-center justify-center z-50 backdrop-filter backdrop-opacity-70 ${showModal ? 'slide-in' : ''}`}>
                                 <div className="bg-bg w-full max-w-md mx-auto rounded-xl shadow-lg text-center pb-2.5">
                                     <div className="relative flex flex-col items-center">
-                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto' onClick={handleModal}>
+                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto'>
                                             {formatAddress(addr)}
                                         </div>
                                         <div className='right-5 top-4 text-sm absolute font-extralight flex justify-center mx-auto hover:opacity-80' onClick={handleModal}>
@@ -80,9 +80,9 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                                                     <div className='mt-5 mb-2'>
                                                         <button onClick={() => quit()} className='text-bg bg-white w-full rounded-md text-[16px] py-2 hover:opacity-80'>Disconnect Wallet</button>
                                                     </div>
-                                                    {/* {router.pathname.startsWith('/profile') ? <></> : <>
-                                                        <span onClick={() => router.push(`/profile/${addr}`)} className='pt-1 font-light hover:text-white/80 text-sm w-full justify-center mx-0 flex'>[View Profile]</span>
-                                                    </>} */}
+                                                    {router.pathname.startsWith('/profile') ? <></> : <>
+                                                        <span onClick={() => router.push(`/profile/${addr}`)} className='mt-4 mb-1.5 font-light hover:text-white/80 text-sm w-full justify-center mx-0 flex'>[View Profile]</span>
+                                                    </>}
                                                 </div>
                                             </div>
                                         </div>
@@ -95,7 +95,7 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                             <div className={`hidden sm:absolute inset-0 sm:flex items-center justify-center z-50 backdrop-filter backdrop-opacity-70 ${showModal ? 'slide-in h-screen' : ''}`}>
                                 <div className="bg-bg w-full max-w-md mx-auto rounded-xl shadow-lg text-center pb-2.5 border border-bg/50">
                                     <div className="relative flex flex-col items-center">
-                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto' onClick={handleModal}>
+                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto'>
                                             {formatAddress(addr)}
                                         </div>
                                         <div className='right-5 top-4 text-sm absolute font-extralight flex justify-center mx-auto hover:opacity-80' onClick={handleModal}>
@@ -112,9 +112,9 @@ const DisconnectModal = forwardRef<HTMLDivElement, DisconnectModalProps>(({ show
                                                     <div className='mt-5 mb-2'>
                                                         <button onClick={() => quit()} className='text-bg bg-white w-full rounded-md text-[16px] py-2 hover:opacity-80'>Disconnect Wallet</button>
                                                     </div>
-                                                    {/* {router.pathname.startsWith('/profile') ? <></> : <>
-                                                        <span onClick={() => router.push(`/profile/${addr}`)} className='pt-1 font-light hover:text-white/80 text-sm w-full justify-center mx-0 flex'>[View Profile]</span>
-                                                    </>} */}
+                                                    {router.pathname.startsWith('/profile') ? <></> : <>
+                                                        <span onClick={() => router.push(`/profile/${addr}`)} className='mt-4 mb-1.5 font-light hover:text-white/80 text-sm w-full justify-center mx-0 flex'>[View Profile]</span>
+                                                    </>}
                                                 </div>
                                             </div>
                                         </div>

@@ -6,7 +6,7 @@ import { IBM_Plex_Mono } from "next/font/google";
 // import { SolanaProvider } from '@/utils/solanaConfig';
 import SolanaContextProvider from '@/utils/solanaContext'
 
-const ibm = IBM_Plex_Mono({ subsets: ["latin"], weight: ['100', '200', '300', '400', '500', '600', '700'] })
+const ibm = IBM_Plex_Mono({ subsets: ["vietnamese"], weight: ['100', '200', '300', '400', '500', '600', '700'] })
 
 function App({ Component, pageProps }: AppProps) {
 

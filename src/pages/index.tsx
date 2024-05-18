@@ -8,86 +8,42 @@ import Insight from '@/components/insight';
 import Image from 'next/image';
 import ConnectModal from '@/components/modals/connect';
 //import { solana } from '@/constants';
-import { useWallet, type Wallet } from '@solana/wallet-adapter-react';
-import QModal from '@/components/modals/hover';
-import Slider from 'rc-slider';
-
-type ConnectModalRefType = HTMLDivElement | null
-type CoinData = {
-  coinData: {
-    associated_bonding_curve: string;
-    bonding_curve: string;
-    complete: boolean;
-    created_timestamp: number;
-    creator: string;
-    description: string;
-    image_uri: string;
-    inverted: null;
-    king_of_the_hill_timestamp: null;
-    last_reply: null;
-    market_cap: number;
-    market_id: null;
-    metadata_uri: string;
-    mint: string;
-    name: string;
-    nsfw: boolean;
-    profile_image: string;
-    raydium_pool: null;
-    reply_count: number;
-    show_name: boolean;
-    symbol: string;
-    telegram: string;
-    total_supply: number;
-    twitter: string;
-    usd_market_cap: number;
-    username: string;
-    virtual_sol_reserves: number;
-    virtual_token_reserves: number;
-    website: string;
-  },
-};
+import { type CoinData, type ConnectModalRefType, type BumpModalRefType } from '@/utils/types';
+import { useWallet } from '@solana/wallet-adapter-react';
+import QModal from '@/components/utils/hover';
+//import Slider from 'rc-slider';
+import BumpModal from '@/components/modals/bump';
 
 export default function Home() {
+
+  const { connected, publicKey } = useWallet()
+
+  const [bumpPackage, setBumpPackage] = useState(0)
+  const [funding, setFunding] = useState('')
+  const [duration, setDuration] = useState('')
 
   const [tokenContract, setTokenContract] = useState('')
   const [tokenError, setTokenError] = useState('')
   const [tokenSearching, setTokenSearching] = useState(false)
   const [tokenFound, setTokenFound] = useState(false)
   const [tokenData, setTokenData] = useState<CoinData | null>(null)
-  const [botNbr, setBotNbr] = useState('10')
-  const [frequency, setFrequency] = useState('30')
-  const [expiry, setExpiry] = useState('24')
-  const [funding, setFunding] = useState('')
-  const [assignNames, setAssignNames] = useState(false)
-  const [reply, setReply] = useState(false)
-
-  const [isBotMenuOpen, setBotMenuOpen] = useState(false)
-  const [isFrequencyMenuOpen, setFrequencyMenuOpen] = useState(false)
-  const [isExpiryMenuOpen, setExpiryMenuOpen] = useState(false)
-
-  const { connected, publicKey } = useWallet()
 
   const [QModalTokenOpen0, setQModalOpen0] = useState(false)
   const [QModalTokenOpen1, setQModalOpen1] = useState(false)
   const [QModalTokenOpen2, setQModalOpen2] = useState(false)
   const [QModalTokenOpen3, setQModalOpen3] = useState(false)
   const [QModalTokenOpen4, setQModalOpen4] = useState(false)
-  const [QModalTokenOpen5, setQModalOpen5] = useState(false)
-  const [QModalTokenOpen6, setQModalOpen6] = useState(false)
-  const [QModalTokenOpen7, setQModalOpen7] = useState(false)
-
-  const minDecimal = 0.001
-  const maxDecimal = 2.000
-  const initMin = 0.001
-  const initMax = 1.000
-  const scaleFactor = 1000
-  const [range, setRange] = useState([initMin, initMax])
 
   const [serviceFee, setServiceFee] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
 
   const [fundingNotSet, setFundingNotSet] = useState(false)
   const [fundingTooLow, setFundingTooLow] = useState(false)
+
+  const [bumpOk, setBumpOk] = useState(false)
+
+  // const [assignNames, setAssignNames] = useState(false)
+  // const [reply, setReply] = useState(false
 
   async function searchContract(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const token = e.target.value
@@ -139,58 +95,7 @@ export default function Home() {
     return <span>{marketcap}</span>
   }
 
-  const handleBotNbr = (botNbr: string) => {
-    setBotNbr(botNbr)
-    setBotMenuOpen(false)
-  }
-
-  const handleBotNbrMenu = () => {
-    if (!isBotMenuOpen) {
-      setBotMenuOpen(true)
-      setExpiryMenuOpen(false)
-      setFrequencyMenuOpen(false)
-    } else {
-      setBotMenuOpen(false)
-      setExpiryMenuOpen(false)
-      setFrequencyMenuOpen(false)
-    }
-  }
-
-  const handleExpiration = (expiry: string) => {
-    setExpiry(expiry)
-    setExpiryMenuOpen(false)
-  }
-
-  const handleExpirationMenu = () => {
-    if (!isExpiryMenuOpen) {
-      setBotMenuOpen(false)
-      setExpiryMenuOpen(true)
-      setFrequencyMenuOpen(false)
-    } else {
-      setBotMenuOpen(false)
-      setExpiryMenuOpen(false)
-      setFrequencyMenuOpen(false)
-    }
-  }
-
-  const handleFrequency = (frequency: string) => {
-    setFrequency(frequency)
-    setFrequencyMenuOpen(false)
-  }
-
-  const handleFrequencyMenu = () => {
-    if (!isFrequencyMenuOpen) {
-      setBotMenuOpen(false)
-      setExpiryMenuOpen(false)
-      setFrequencyMenuOpen(true)
-    } else {
-      setBotMenuOpen(false)
-      setExpiryMenuOpen(false)
-      setFrequencyMenuOpen(false)
-    }
-  }
-
-  function setFundingAmount(e: React.ChangeEvent<HTMLInputElement>) {
+  function selectFunding(e: React.ChangeEvent<HTMLInputElement>) {
     const fund = e.target.value
     const fundNbr = fund.replace(/[^0-9.]/g, '')
     const dot = fundNbr.split('.').length - 1
@@ -203,22 +108,17 @@ export default function Home() {
     }
   }
 
-  const convertToDecimal = (value: any) => {
-    return (value / scaleFactor) * (maxDecimal - minDecimal) + minDecimal
+  function selectDuration(e: React.ChangeEvent<HTMLInputElement>) {
+    const day = e.target.value
+    const dayNbr = day.replace(/[^0-9]/g, '')
+    if (dayNbr.startsWith('0') && dayNbr.length === 1) {
+      return null
+    } else {
+      setDuration(dayNbr)
+    }
   }
 
-  const convertToSliderValue = (decimalValue: any) => {
-    return ((decimalValue - minDecimal) / (maxDecimal - minDecimal)) * scaleFactor
-  }
-
-  const handleRangeSliderChange = (sliderValues: any) => {
-    const decimalValues = sliderValues.map(convertToDecimal)
-    setRange(decimalValues);
-  }
-
-  const sliderValues = range.map(convertToSliderValue)
-
-  const calcFunding = (funding: string, bot: string) => {
+  const calcFunding = (funding: string, duration: string) => {
     if (funding == '' || funding == '0') {
       if (!fundingNotSet) {
         setFundingNotSet(true)
@@ -230,16 +130,32 @@ export default function Home() {
       }
     }
     let fundNbr = parseFloat(funding)
-    let botNbr = parseFloat(bot)
-    if (fundNbr < (0.1 * botNbr)) {
+    let botNbr = 0
+    if (bumpPackage == 1) {
+      botNbr = 3
+    } else if (bumpPackage == 2) {
+      botNbr = 10
+    } else if (bumpPackage == 3) {
+      botNbr = 25
+    } else {
+      botNbr = 0
+    }
+    let dayNbr = parseFloat(duration)
+    if (fundNbr < (0.1 * botNbr * dayNbr)) {
       if (!fundingTooLow) {
         setFundingTooLow(true)
       }
       return <>
         <span className='flex justify-center items-center'>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="text-red w-3 h-3">
-            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
-          </svg>
+          <div className='relative'>
+            {QModalTokenOpen3 && <QModal text='Minimum funding is 0.1 SOL/Wallet/Day.' w={155} />}
+            <svg
+              onMouseEnter={() => setQModalOpen3(true)}
+              onMouseLeave={() => setQModalOpen3(false)}
+              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+              <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+            </svg>
+          </div>
           <span className='pl-1.5'>Too low</span>
         </span>
       </>
@@ -250,47 +166,38 @@ export default function Home() {
       if (fundingTooLow) {
         setFundingTooLow(false)
       }
-      return <span>{fundNbr.toString()} SOL</span>
+      return <span>{fundNbr} SOL</span>
     }
   }
 
-  const calcServicesFees = (bot: string, frequency: string, expiry: string) => {
-    let botfee = 0
-    if (bot == '5') {
-      botfee += 0.5
-    } else if (bot == '10') {
-      botfee += 1
-    } else if (bot == '20') {
-      botfee += 2
-    } else if (bot == '50') {
-      botfee += 3.5
+  function formatFee(totalFee: number) {
+    const fee = totalFee.toFixed(2)
+    return parseFloat(fee)
+  }
+
+  const calcServicesFees = (bump: number, funding: string, duration: string) => {
+    let service = 0
+    let fundNbr = parseFloat(funding)
+    let fundFee = (fundNbr * 0.2)
+    let dayNbr = parseFloat(duration)
+    if (bump == 1) {
+      service = 0.05
+    } else if (bump == 2) {
+      service = 0.1
+    } else if (bump == 3) {
+      service = 0.2
     } else {
-      botfee + 0
+      service == 0
     }
-    let frequencyfee = 0
-    if (frequency == '15') {
-      frequencyfee += 0.5
-    } else if (frequency == '5') {
-      frequencyfee += 1
-    } else (
-      frequencyfee += 0
-    )
-    let expiryfee = 0
-    if (expiry == '48') {
-      expiryfee += 0.5
-    } else if (expiry == '168') {
-      expiryfee += 3
-    } else {
-      expiryfee += 0
-    }
-    let totalfee = (botfee + frequencyfee + expiryfee)
-    setServiceFee(totalfee)
-    return { totalfee }
+    let totalfee = (service + (fundFee * dayNbr))
+    let feeReturn = formatFee(totalfee)
+    setServiceFee(feeReturn)
+    return <span>{feeReturn} SOL</span>
   }
 
   useEffect(() => {
-    calcServicesFees(botNbr, frequency, expiry)
-  }, [botNbr, frequency, expiry])
+    calcServicesFees(bumpPackage, funding, duration)
+  }, [bumpPackage, funding, duration])
 
   const calcTotal = (funding: string, serviceFee: number) => {
     let fundNbr = parseFloat(funding)
@@ -299,8 +206,9 @@ export default function Home() {
       return 0
     } else {
       let total = (fundNbr + serviceFee)
-      setTotalPrice(total)
-      return { total }
+      let totalReturn = formatFee(total)
+      setTotalPrice(totalReturn)
+      return { totalReturn }
     }
   }
 
@@ -315,31 +223,39 @@ export default function Home() {
     setConnectModalOpen(prevState => !prevState)
   }
 
-  function bump(tokenContract: string, botNbr: string, frequency: string, expiry: string, assignNames: boolean, reply: boolean) {
+  useEffect(() => {
+    if (bumpPackage != 0 && tokenFound && funding && duration) {
+      setBumpOk(true)
+    } else {
+      setBumpOk(false)
+    }
+  }, [bumpPackage, tokenFound, funding, duration])
+
+  function bump(bumpPackage: number, tokenFound: boolean, duration: string) {
     if (!connected && !publicKey) {
       handleConnectModal()
     } else {
-      if (tokenFound == false) {
+      if (bumpPackage == 0) {
+        alert('Bump package not selected.')
+      } else if (tokenFound == false) {
         alert('Invalid token address.')
-      } else if (botNbr !== '1' && botNbr !== '5' && botNbr !== '10' && botNbr !== '20' && botNbr !== '50') {
-        alert('Invalid bots number.')
-      } else if (frequency !== '30' && frequency !== '15' && frequency !== '5') {
-        alert('Invalid frequency.')
-      } else if (expiry !== '168' && expiry !== '48' && expiry !== '24') {
-        alert('Invalid expiry.')
+      } else if (duration == '' || duration == '0') {
+        alert('Invalid duration.')
       } else if (fundingNotSet) {
         alert('Funding not set.')
       } else if (fundingTooLow) {
         alert('Funding too low.')
       } else {
-        createOrder(tokenContract, botNbr, frequency, expiry, assignNames, reply)
+        handleBumpModal()
       }
     }
   }
 
-  async function createOrder(tokenContract: string, botNbr: string, frequency: string, expiry: string, assignNames: boolean, reply: boolean) {
-    alert(`ok, client: ${publicKey}, token: ${tokenContract}, bot: ${parseFloat(botNbr)}, freq: ${parseFloat(frequency)}, expiry: ${parseFloat(expiry)}, range: ${range[0].toFixed(3)}-${range[1].toFixed(2)}, naming: ${assignNames}, reply: ${reply}, serviceFee: ${serviceFee}`)
-    // TODO - createOrder() - SPLIT FUNDING/FEE?
+  const BumpModalRef = useRef<BumpModalRefType>(null)
+  const [isBumpModalOpen, setBumpModalOpen] = useState(false)
+
+  const handleBumpModal = () => {
+    setBumpModalOpen(prevState => !prevState)
   }
 
   return (
@@ -358,300 +274,282 @@ export default function Home() {
         <meta property="og:image" content={`${WebsiteURL}/og.jpg`} />
       </Head>
       <Navbar />
-      <div className="md:flex md:flex-row md:row-span-2 items-center justify-center h-[100vh] mt-14 md:mt-0">
-        <div className='flex justify-center mx-auto w-full md:w-1/2'>
-          <div className='flex flex-col col-span-2 md:gap-y-14 gap-x-10 md:mx-32 mx-4'>
-            <div className='md:order-1 order-2 md:pl-40 md:py-0 py-5'>
-              <h1 className='text-lg md:text-4xl text-start'>Our Bots keep your token Bumping on Pump Dot Fun. A guaranteed Radyium listing!</h1>
-            </div>
-            <div className='md:order-2 order-1 md:pl-40 mt-2.5 md:mt-0'>
-              <Insight />
-            </div>
-          </div>
+      <div className="block justify-center md:mt-0 md:max-w-xl lg:max-w-6xl md:mx-auto mx-2.5">
+        <div id='hero' className='mt-20 md:mt-28'>
+          <h1 className='text-lg md:text-2xl lg:text-4xl md:text-center text-start font-[400]'>Our Bots keep your token Bumping on Pump Dot Fun. A guaranteed Radyium listing!</h1>
         </div>
-        <div className='flex justify-center mx-auto w-full md:w-1/2 pt-2 pb-5'>
-          <div id='bump-form' className='bg-[#2E303A] rounded-md md:w-[60%] w-full mx-4'>
-            <div className='mx-4 mt-3 mb-5'>
-              <h2 className='mb-2 text-lg italic font-light flex justify-start mx-auto'>
+        <div id='insights' className='md:flex md:justify-center md:mx-auto my-5 md:my-8'>
+          <Insight />
+        </div>
+      </div>
+      <div className="block justify-center mt-2.5 md:mt-0 md:max-w-xl lg:max-w-6xl md:mx-auto mx-2.5">
+        <div className='flex justify-center mx-auto w-full'>
+          <div id='bump-form' className='bg-[#2E303A] rounded-md w-full mb-10'>
+            <div className='lg:mx-7 md:mx-4 mx-2.5'>
+              <h2 className='lg:my-6 md:my-4 text-lg italic font-light hidden sm:flex justify-start mx-auto'>
+                Create a Bump
+              </h2>
+              <h2 className='my-2 text-lg italic font-light flex sm:hidden justify-start mx-auto'>
                 Bump Settings
               </h2>
-              <div id='token-details' className='w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
-                <div className='flex font-[400]'>
-                  <span className='text-[#FFFFFF80] text-xs md:text-sm'>Token address</span>
-                  <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                  <div className='relative'>
-                    {QModalTokenOpen0 && <QModal text='Enter your pump.fun SPL token address.' w={155} />}
-                    <svg
-                      onMouseEnter={() => setQModalOpen0(true)}
-                      onMouseLeave={() => setQModalOpen0(false)}
-                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                    </svg>
+              <div id='bump-settings' className='lg:flex lg:flex-row lg:row-span-2 lg:gap-x-8'>
+                <div id='package-selector' className='lg:w-1/2 w-full'>
+                  <div id='package-1' onClick={() => setBumpPackage(1)} className={`w-full select-none rounded-md px-3 py-2.5 ${bumpPackage == 1 ? 'bg-green text-[#000]' : 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF1A]/15 text-white'}`}>
+                    <div className='flex flex-row row-span-3'>
+                      <div className='w-[15%] sm:w-[7.5%]'>
+                        {bumpPackage == 1 ? <>
+                          <div className='mt-1 w-6 h-6 border rounded-full bg-white border-white text-green flex'>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex justify-center items-center m-auto">
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </> : <>
+                          <div className='mt-1 w-6 h-6 border rounded-full' />
+                        </>}
+                      </div>
+                      <div className='w-[85%] sm:w-[67.5%]'>
+                        <h3 className='font-[600] text-lg'>Light Bump</h3>
+                        <span className='sm:hidden py-0.5 font-[500] text-md'>0.05 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
+                        <p className='font-[400] text-sm opacity-50 py-1.5 sm:py-0 sm:pt-2 sm:pb-1.5'>3 Wallet Bumping the Token</p>
+                        <p className='font-[400] text-sm opacity-50'>1 Bump per Minute</p>
+                      </div>
+                      <div className='hidden sm:block sm:w-[25%]'>
+                        <span className='flex items-center justify-end py-0.5 font-[500] text-md'>0.05 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div id='package-2' onClick={() => setBumpPackage(2)} className={`my-3 w-full select-none rounded-md px-3 py-2.5 ${bumpPackage == 2 ? 'bg-green text-[#000]' : 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF1A]/15 text-white'}`}>
+                    <div className='flex flex-row row-span-3'>
+                      <div className='w-[15%] sm:w-[7.5%]'>
+                        {bumpPackage == 2 ? <>
+                          <div className='mt-1 w-6 h-6 border rounded-full bg-white border-white text-green flex'>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex justify-center items-center m-auto">
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </> : <>
+                          <div className='mt-1 w-6 h-6 border rounded-full' />
+                        </>}
+                      </div>
+                      <div className='w-[85%] sm:w-[67.5%]'>
+                        <h3 className='font-[600] text-lg'>Keep it Bumping</h3>
+                        <span className='sm:hidden py-0.5 font-[500] text-md'>0.1 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
+                        <p className='font-[400] text-sm opacity-50 py-1.5 sm:py-0 sm:pt-2 sm:pb-1.5'>10 Wallet Bumping the Token</p>
+                        <p className='font-[400] text-sm opacity-50'>1 Bump per 30 Seconds</p>
+                      </div>
+                      <div className='hidden sm:block sm:w-[25%]'>
+                        <span className='flex items-center justify-end py-0.5 font-[500] text-md'>0.1 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div id='package-3' onClick={() => setBumpPackage(3)} className={`w-full rounded-md select-none px-3 py-2.5 ${bumpPackage == 3 ? 'bg-green text-[#000]' : 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF1A]/15 text-white'}`}>
+                    <div className='flex flex-row row-span-3'>
+                      <div className='w-[15%] sm:w-[7.5%]'>
+                        {bumpPackage == 3 ? <>
+                          <div className='mt-1 w-6 h-6 border rounded-full bg-white border-white text-green flex'>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex justify-center items-center m-auto">
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </> : <>
+                          <div className='mt-1 w-6 h-6 border rounded-full' />
+                        </>}
+                      </div>
+                      <div className='w-[85%] sm:w-[67.5%]'>
+                        <h3 className='font-[600] text-lg'>Max Bumping to Radyium</h3>
+                        <span className='sm:hidden py-0.5 font-[500] text-md'>0.2 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
+                        <p className='font-[400] text-sm opacity-50 py-1.5 sm:py-0 sm:pt-2 sm:pb-1.5'>25 Wallet Bumping the Token</p>
+                        <p className='font-[400] text-sm opacity-50'>1 Bump per 5 Seconds</p>
+                      </div>
+                      <div className='hidden sm:block sm:w-[25%]'>
+                        <span className='flex items-center justify-end py-0.5 font-[500] text-md'>0.2 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div id='token-input' className='flex justify-start mt-1'>
-                  <div className='relative w-full'>
-                    <textarea
-                      id="token"
-                      name="token"
-                      rows={1}
-                      value={tokenContract}
-                      onChange={(e) => searchContract(e)}
-                      placeholder="Your pump.fun SPL token..."
-                      className={`w-full text-sm rounded-md px-2.5 py-2 focus:outline-none ${tokenError ? 'focus:border-red' : 'focus:outline-none focus:border-green'} border border-white bg-bg/50`}
-                      style={{ resize: "none" }}
-                    />
-                    {tokenSearching && <>
-                      <div className="absolute bottom-[17px] right-2">
-                        <Spinner className="w-4 h-4 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                <div id='bump-details' className='lg:w-1/2 w-full'>
+                  <div id='token-details'>
+                    {!tokenFound ? <>
+                      <div className='mt-3 lg:mt-0 w-full rounded-md px-3 py-2.5 bg-[#FFFFFF1A] text-white'>
+                        <div id='label' className='sm:flex sm:flex-row sm:row-span-2 sm:items-center'>
+                          <div className='flex font-[400] sm:w-[35%]'>
+                            <span className='text-[#FFFFFF80] text-xs md:text-sm'>Token address</span>
+                            <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
+                            <div className='relative'>
+                              {QModalTokenOpen0 && <QModal text='The token address you want to pump.' w={140} />}
+                              <svg
+                                onMouseEnter={() => setQModalOpen0(true)}
+                                onMouseLeave={() => setQModalOpen0(false)}
+                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                          <div id='token-input' className='flex justify-start sm:w-[65%] sm:mt-0 mt-1.5'>
+                            <div className='relative w-full'>
+                              <textarea
+                                id="token"
+                                name="token"
+                                rows={1}
+                                value={tokenContract}
+                                onChange={(e) => searchContract(e)}
+                                placeholder="Address"
+                                className={`w-full h-full flex text-sm rounded-md px-3 py-2 sm:py-2.5 focus:outline-none ${tokenError ? 'focus:border-red' : 'focus:outline-none focus:border-green'} border border-white bg-bg/50`}
+                                style={{ resize: "none" }}
+                              />
+                              {tokenSearching && <>
+                                <div className="absolute bottom-[17px] right-2">
+                                  <Spinner className="w-4 h-4 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                                </div>
+                              </>}
+                            </div>
+                          </div>
+                        </div>
+                        {tokenError && <p className='text-[8px] text-start sm:text-end text-red pt-2 p-1'>{tokenError}</p>}
+                      </div>
+                    </> : <>
+                      <div className='mt-3 lg:mt-0 w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
+                        <div className='flex font-[600] justify-between'>
+                          <div id='token-infos-full' className='flex'>
+                            {tokenData?.coinData.image_uri && <Image src={tokenData?.coinData.image_uri} width={53.5} height={53.5} alt={`${tokenData?.coinData.name} Token Logo`} className='rounded-sm' unoptimized fetchPriority='auto' />}
+                            <span className='flex-col leading-none'>
+                              <span className='flex'>
+                                <span className='text-[#FFF] text-sm pl-2'>{tokenData?.coinData.name}</span>
+                                <span className='text-[#FFFFFF80] text-sm pl-1.5'>[ticker: {tokenData?.coinData.symbol}]</span>
+                              </span>
+                              <span className='text-blue text-xs pl-2 font-[400]'>Created by {tokenData && <>{tokenData.coinData.username ? <>{(tokenData.coinData.username)}</> : <>{formatAddress(tokenData.coinData.creator)}</>}</>}</span>
+                              <br />
+                              <span className='text-green text-xs pl-2 font-[400]'>Market Cap: {tokenData && <>{formatMC(tokenData.coinData.market_cap)}</>}</span>
+                            </span>
+                          </div>
+                          <div className='flex'>
+                            <button onClick={() => deleteToken()} id='cancel-btn' className='text-red text-sm flex justify-end mx-1 hover:opacity-80'>
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-[18px] h-[18px] mt-[1px]">
+                                <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </>}
                   </div>
-                </div>
-                {tokenError && <p className='text-[8px] text-start text-red pl-1'>{tokenError}</p>}
-                {tokenFound && <>
-                  <div id='token-details' className='w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
-                    <div className='flex font-[600] justify-between'>
-                      <div id='token-infos-full' className='flex'>
-                        {tokenData?.coinData.image_uri && <Image src={tokenData?.coinData.image_uri} width={53.5} height={53.5} alt={`${tokenData?.coinData.name} Token Logo`} className='rounded-sm' unoptimized fetchPriority='auto' />}
-                        <span className='flex-col leading-none'>
-                          <span className='flex'>
-                            <span className='text-[#FFF] text-sm pl-2'>{tokenData?.coinData.name}</span>
-                            <span className='text-[#FFFFFF80] text-sm pl-1.5'>[ticker: {tokenData?.coinData.symbol}]</span>
-                          </span>
-                          <span className='text-blue text-xs pl-2 font-[400]'>Created by {tokenData && <>{tokenData.coinData.username ? <>{(tokenData.coinData.username)}</> : <>{formatAddress(tokenData.coinData.creator)}</>}</>}</span>
-                          <br />
-                          <span className='text-green text-xs pl-2 font-[400]'>Market Cap: {tokenData && <>{formatMC(tokenData.coinData.market_cap)}</>}</span>
-                        </span>
-                      </div>
-                      <div className='flex'>
-                        <button onClick={() => deleteToken()} id='cancel-btn' className='text-red text-sm flex justify-end mx-1 hover:opacity-80'>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-[18px] h-[18px] mt-[1px]">
-                            <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </>}
-              </div>
-              <div id='bot-details' className='mt-2.5 pb-12 w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
-                <div className='flex flex-row row-span-2 gap-x-2.5'>
-                  <div className='w-full'>
-                    <div className='flex font-[400]'>
-                      <span className='text-[#FFFFFF80] text-xs md:text-sm'>Number of Bots</span>
-                      <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <div className='relative'>
-                        {QModalTokenOpen1 && <QModal text='Create a number of bots to keep your token on the bump front page.' w={185} />}
-                        <svg
-                          onMouseEnter={() => setQModalOpen1(true)}
-                          onMouseLeave={() => setQModalOpen1(false)}
-                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div id='bot-nbr-input' className='flex justify-start mt-1'>
-                      <div className='relative w-full'>
-                        <button
-                          className="w-full text-sm rounded-md px-2 py-2  hover:outline-2 outline-8 border border-white bg-bg/50 flex justify-between items-center"
-                          onClick={() => handleBotNbrMenu()}
-                        >
-                          <div>{botNbr == '1' ? `${botNbr} Bot` : `${botNbr} Bots`}</div>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff" className="w-3 h-3">
-                            <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        {isBotMenuOpen && (
-                          <div className="absolute mt-0 w-full rounded-md shadow-lg bg-green/95 z-10">
-                            <ul className='p-0.5 mx-0.5 text-[#000] font-[300] sm:text-sm text-xs'>
-                              <li onClick={() => handleBotNbr('1')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${botNbr == '1' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>1 Bot</span>
-                                <span>(Free)</span>
-                              </li>
-                              <li onClick={() => handleBotNbr('5')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${botNbr == '5' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>5 Bots</span>
-                                <span>(0.5 SOL)</span>
-                              </li>
-                              <li onClick={() => handleBotNbr('10')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${botNbr == '10' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>10 Bots</span>
-                                <span>(1 SOL)</span>
-                              </li>
-                              <li onClick={() => handleBotNbr('20')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${botNbr == '20' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>20 Bots</span>
-                                <span>(2 SOL)</span>
-                              </li>
-                              <li onClick={() => handleBotNbr('50')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${botNbr == '50' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>50 Bots</span>
-                                <span>(3.5 SOL)</span>
-                              </li>
-                            </ul>
+                  <div id='bump-details'>
+                    <div className='my-3 w-full rounded-md px-3 py-2.5 bg-[#FFFFFF1A] text-white'>
+                      <div id='funding' className='sm:flex sm:flex-row sm:row-span-2 sm:items-center'>
+                        <div id='label' className='flex font-[400] sm:w-[35%]'>
+                          <span className='text-[#FFFFFF80] text-xs md:text-sm'>Fund Bots</span>
+                          <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
+                          <div className='relative'>
+                            {QModalTokenOpen1 && <QModal text='Fund your bots with SOL to trade your token. You can withdraw the funds at any time.' w={195} />}
+                            <svg
+                              onMouseEnter={() => setQModalOpen1(true)}
+                              onMouseLeave={() => setQModalOpen1(false)}
+                              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                            </svg>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className='flex mt-2.5 font-[400]'>
-                      <span className='text-[#FFFFFF80] text-xs md:text-sm'>Expiry</span>
-                      <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <div className='relative'>
-                        {QModalTokenOpen2 && <QModal text='Bots are costly, so we expire them after a while.' w={205} />}
-                        <svg
-                          onMouseEnter={() => setQModalOpen2(true)}
-                          onMouseLeave={() => setQModalOpen2(false)}
-                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div id='expiration-input' className='flex justify-start mt-1'>
-                      <div className='relative w-full'>
-                        <button
-                          className="w-full text-sm rounded-md px-2 py-2  hover:outline-2 outline-8 border border-white bg-bg/50 flex justify-between items-center"
-                          onClick={() => handleExpirationMenu()}
-                        >
-                          <div>{expiry != '168' ? `${expiry} Hours` : `1 Week`}</div>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff" className="w-3 h-3">
-                            <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        {isExpiryMenuOpen && (
-                          <div className="absolute mt-0 w-full rounded-md shadow-lg bg-green/95 z-10">
-                            <ul className='p-0.5 mx-0.5 text-[#000] font-[300] sm:text-sm text-xs'>
-                              <li onClick={() => handleExpiration('24')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${expiry == '24' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>24 Hours</span>
-                                <span>(Free)</span>
-                              </li>
-                              <li onClick={() => handleExpiration('48')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${expiry == '48' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>48 Hours</span>
-                                <span>(0.5 SOL)</span>
-                              </li>
-                              <li onClick={() => handleExpiration('168')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${expiry == '168' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>1 Week</span>
-                                <span>(3 SOL)</span>
-                              </li>
-                            </ul>
+                        </div>
+                        <div id='funding-input' className='flex justify-start sm:w-[65%] sm:mt-0 mt-1.5'>
+                          <div className='relative w-full'>
+                            <input
+                              id="funding"
+                              name="funding"
+                              value={funding}
+                              onChange={(e) => selectFunding(e)}
+                              placeholder="0.01"
+                              className="w-full h-full text-sm rounded-md px-3 py-2 sm:py-2.5 focus:outline-none focus:border-green border border-white bg-bg/50"
+                            />
+                            <div className="absolute bottom-[9px] sm:bottom-[10.5px] right-3 opacity-90 text-sm">
+                              SOL
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className='w-full'>
-                    <div className='flex font-[400]'>
-                      <span className='text-[#FFFFFF80] text-xs md:text-sm'>Frequency</span>
-                      <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <div className='relative'>
-                        {QModalTokenOpen3 && <QModal text='How often do you want the bots to buy, note that each bot will buy on a different timing from the other to keep your token Bumping.' w={215} />}
-                        <svg
-                          onMouseEnter={() => setQModalOpen3(true)}
-                          onMouseLeave={() => setQModalOpen3(false)}
-                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div id='frequency-input' className='flex justify-start mt-1'>
-                      <div className='relative w-full'>
-                        <button
-                          className="w-full text-sm rounded-md px-2 py-2  hover:outline-2 outline-8 border border-white bg-bg/50 flex justify-between items-center"
-                          onClick={() => handleFrequencyMenu()}
-                        >
-                          <div>{frequency ? `${frequency} Sec` : 'Frequency'}</div>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff" className="w-3 h-3">
-                            <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        {isFrequencyMenuOpen && (
-                          <div className="absolute mt-0 w-full rounded-md shadow-lg bg-green/95 z-10">
-                            <ul className='p-0.5 mx-0.5 text-[#000] font-[300] sm:text-sm text-xs'>
-                              <li onClick={() => handleFrequency('30')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${frequency == '30' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>30 Sec</span>
-                                <span>(Free)</span>
-                              </li>
-                              <li onClick={() => handleFrequency('15')} className={`sm:px-2 px-1 py-2 my-1 cursor-pointer flex justify-between rounded-md ${frequency == '15' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>15 Sec</span>
-                                <span>(0.5 SOL)</span>
-                              </li>
-                              <li onClick={() => handleFrequency('5')} className={`sm:px-2 px-1 py-2 my-0.5 cursor-pointer flex justify-between rounded-md ${frequency == '5' ? 'bg-white' : 'hover:bg-white'}`}>
-                                <span>5 Sec</span>
-                                <span>(1 SOL)</span>
-                              </li>
-                            </ul>
+                      <div id='duration' className='mt-3 sm:mt-5 sm:flex sm:flex-row sm:row-span-2 sm:items-center'>
+                        <div id='label' className='flex font-[400] sm:w-[35%]'>
+                          <span className='text-[#FFFFFF80] text-xs md:text-sm'>Bump for</span>
+                          <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
+                          <div className='relative'>
+                            {QModalTokenOpen2 && <QModal text='Select the duration that you want bots run trades on your token.' w={180} />}
+                            <svg
+                              onMouseEnter={() => setQModalOpen2(true)}
+                              onMouseLeave={() => setQModalOpen2(false)}
+                              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                            </svg>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className='flex mt-2.5 font-[400]'>
-                      <span className='text-[#FFFFFF80] text-xs md:text-sm'>Fund Bots</span>
-                      <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                      <div className='relative'>
-                        {QModalTokenOpen4 && <QModal text='Fund your bots with SOL to trade your token. You can withdraw the funds at any time.' w={240} />}
-                        <svg
-                          onMouseEnter={() => setQModalOpen4(true)}
-                          onMouseLeave={() => setQModalOpen4(false)}
-                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div id='funding-input' className='flex justify-start mt-1'>
-                      <div className='relative w-full'>
-                        <input
-                          id="funding"
-                          name="funding"
-                          value={funding}
-                          onChange={(e) => setFundingAmount(e)}
-                          placeholder="0.01"
-                          className="w-full text-sm rounded-md px-2.5 py-2 focus:outline-none focus:border-green border border-white bg-bg/50"
-                        />
-                        <div className="absolute bottom-[9px] right-2 text-sm">
-                          SOL
+                        </div>
+                        <div id='duration-input' className='flex justify-start sm:w-[65%] sm:mt-0 mt-1.5'>
+                          <div className='relative w-full'>
+                            <input
+                              id="duration"
+                              name="duration"
+                              value={duration}
+                              onChange={(e) => selectDuration(e)}
+                              placeholder="1"
+                              className="w-full h-full text-sm rounded-md px-3 py-2 sm:py-2.5 focus:outline-none focus:border-green border border-white bg-bg/50"
+                            />
+                            <div className="absolute bottom-[9px] sm:bottom-[10.5px] right-3 opacity-90 text-sm">
+                              Day
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className='flex mt-2.5 font-[400]'>
-                  <span className='text-[#FFFFFF80] text-xs md:text-sm'>Buy Range</span>
-                  <span className='text-[#FFFFFF80] text-[10px] ml-0.5'>*</span>
-                  <div className='relative'>
-                    {QModalTokenOpen5 && <QModal text='The minimum random buy/sell range for each trade is 0.001 SOL and the maximum is an equation. (Funds/Bots)' w={225} />}
-                    <svg
-                      onMouseEnter={() => setQModalOpen5(true)}
-                      onMouseLeave={() => setQModalOpen5(false)}
-                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-0.5">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <div className='flex w-full mt-1'>
-                  <span className='text-[#FFFFFF80] text-xs sm:text-sm flex justify-start mx-0 w-[10%]'>Min</span>
-                  <div className='w-[80%] md:w-[85%] mt-0 md:mt-[3px] double-range-slider-container relative'>
-                    <Slider
-                      min={0.001}
-                      max={scaleFactor}
-                      value={sliderValues}
-                      onChange={handleRangeSliderChange}
-                      range
-                    />
-                    <div className="value-displays">
-                      <span
-                        className="value-display"
-                        style={{ left: `${(sliderValues[0] / scaleFactor) * 100}%`, position: 'absolute', fontSize: '10px' }}
-                      >
-                        {range[0].toFixed(3)} SOL
-                      </span>
-                      <span
-                        className="value-display"
-                        style={{ left: `${(sliderValues[1] / scaleFactor) * 100}%`, position: 'absolute', fontSize: '10px' }}
-                      >
-                        {range[1].toFixed(2)} SOL
-                      </span>
+                  <div id='pricing' className='w-full px-2 py-1'>
+                    <div id='funding' className='flex justify-between mx-auto'>
+                      <div className='flex'>
+                        <span className='text-[#FFF] font-[400] text-sm'>Funding (redeemable)</span>
+                      </div>
+                      <div className='flex'>
+                        <span className='text-red text-sm'>
+                          {calcFunding(funding, duration)}
+                        </span>
+                      </div>
+                    </div>
+                    <div id='service' className='flex justify-between mx-auto my-1'>
+                      <div className='flex'>
+                        <span className='text-[#FFF] font-[400] text-sm'>Services</span>
+                        <div className='relative'>
+                          {QModalTokenOpen4 && <QModal text='The price of your choosen package per day + 2% of your bots funding.' w={160} />}
+                          <svg
+                            onMouseEnter={() => setQModalOpen4(true)}
+                            onMouseLeave={() => setQModalOpen4(false)}
+                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#FFFFFF80" className="pl-0.5 md:pl-1 w-[15px] h-[15px] md:w-[18px] md:h-[18px] opacity-50 hover:opacity-100 pt-1 md:mt-0 mt-[1.5px]">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className='flex'>
+                        <span className='text-red text-sm'>{Number.isNaN(serviceFee) ? 'Not Set' : <>{serviceFee} SOL</>}</span>
+                      </div>
+                    </div>
+                    <div id='total'>
+                      {Number.isNaN(totalPrice) ? null : <>
+                        <div className='py-2'>
+                          <div className='border-t-[1px] border-[#FFFFFF1A]' />
+                        </div>
+                        <div className='flex justify-between mx-auto my-1'>
+                          <div className='flex'>
+                            <span className='text-[#FFF] font-[600] text-sm'>Total:</span>
+                          </div>
+                          <div className='flex'>
+                            <span className='text-red text-sm'>{totalPrice} SOL</span>
+                          </div>
+                        </div>
+                      </>}
                     </div>
                   </div>
-                  <span className='text-[#FFFFFF80] text-xs sm:text-sm flex justify-end mx-0 w-[10%] pl-8 md:pl-0'>Max</span>
                 </div>
               </div>
-              <div id='additionals-details' className='mt-2.5 w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
+              <div id='bump-btn' className='lg:my-5 md:my-3 my-2 w-full lg:flex lg:flex-row lg:row-span-2 lg:gap-x-8'>
+                <div className='w-full hidden lg:block' />
+                <div className='w-full'>
+                  <button disabled={!bumpOk} onClick={() => bump(bumpPackage, tokenFound, duration)} className={`font-[400] text-sm w-full rounded-md px-10 py-2 lg:py-3 ${bumpOk ? 'text-bg bg-green hover:opacity-80' : 'bg-[#FFFFFF1A] text-[#FFFFFF80]'}`}>Start Bumping</button>
+                </div>
+              </div>
+              {/* <div id='additionals-details' className='mt-2.5 w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
                 <div className='flex justify-between mx-auto'>
                   <div className='flex font-[400]'>
                     <span className='text-[#FFFFFF80] text-xs md:text-sm'>Assign names to wallets</span>
@@ -666,8 +564,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div className='flex font-[400]'>
-                    <span className='text-yellow text-xs md:text-sm'>Coming soon</span>
-                    {/* <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
+                    <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
                     <Switch
                       checked={assignNames}
                       onChange={setAssignNames}
@@ -679,7 +576,7 @@ export default function Home() {
                         className={`${assignNames ? 'translate-x-[16px] sm:translate-x-[20px]' : 'translate-x-[1px] sm:translate-x-[2px]'
                           } inline-block h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] transform rounded-full bg-bg transition`}
                       />
-                    </Switch> */}
+                    </Switch>
                   </div>
                 </div>
                 <div className='flex justify-between mx-auto mt-2.5'>
@@ -696,8 +593,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div className='flex font-[400]'>
-                    <span className='text-yellow text-xs md:text-sm'>Coming soon</span>
-                    {/* <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
+                    <span className='text-[#FFF] text-xs md:text-sm'>1 SOL</span>
                     <Switch
                       checked={reply}
                       onChange={setReply}
@@ -709,52 +605,19 @@ export default function Home() {
                         className={`${reply ? 'translate-x-[16px] sm:translate-x-[20px]' : 'translate-x-[1px] sm:translate-x-[2px]'
                           } inline-block h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] transform rounded-full bg-bg transition`}
                       />
-                    </Switch> */}
+                    </Switch>
                   </div>
                 </div>
-              </div>
-              <div id='total' className='w-full px-2 py-2'>
-                <div className='flex justify-between mx-auto my-1'>
-                  <div className='flex'>
-                    <span className='text-[#FFF] font-[400] text-sm'>Funding (redeemable)</span>
-                  </div>
-                  <div className='flex'>
-                    <span className='text-red text-sm'>
-                      {calcFunding(funding, botNbr)}
-                    </span>
-                  </div>
-                </div>
-                <div className='flex justify-between mx-auto my-1'>
-                  <div className='flex'>
-                    <span className='text-[#FFF] font-[400] text-sm'>Services</span>
-                  </div>
-                  <div className='flex'>
-                    <span className='text-red text-sm'>{serviceFee == 0 ? 'Free' : <>{serviceFee} SOL</>}</span>
-                  </div>
-                </div>
-                {totalPrice == 0 ? null : <>
-                  <div className='py-2'>
-                    <div className='border-t-[1px] border-[#FFFFFF1A]' />
-                  </div>
-                  <div className='flex justify-between mx-auto my-1'>
-                    <div className='flex'>
-                      <span className='text-[#FFF] font-[600] text-sm'>Total:</span>
-                    </div>
-                    <div className='flex'>
-                      <span className='text-red text-sm'>{totalPrice} SOL</span>
-                    </div>
-                  </div>
-                </>}
-              </div>
-              <div className='mx-1 mt-1 mb-2.5'>
-                <button onClick={() => bump(tokenContract, botNbr, frequency, expiry, assignNames, reply)} className='text-bg bg-green w-full rounded-md py-2 hover:opacity-80'>Start Bumping</button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
-      </div>
+      </div >
       <>
         {isConnectModalOpen && <><ConnectModal showModal={isConnectModalOpen} closeModal={handleConnectModal} ref={ConnectModalRef} /></>}
+      </>
+      <>
+        {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenData ? tokenData.coinData.mint : ''} tokenName={tokenData ? tokenData.coinData.name : ''} tokenTicker={tokenData ? tokenData.coinData.symbol : ''} tokenImage={tokenData ? tokenData.coinData.image_uri : ''} bumpPackage={bumpPackage} duration={parseFloat(duration) * 24} funding={parseFloat(funding)} fee={serviceFee} /></>}
       </>
     </>
   );

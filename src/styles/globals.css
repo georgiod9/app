@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 * {
-  @apply transition-colors duration-[320ms]
+  @apply transition-colors duration-[0ms]
 }
 
 :root {

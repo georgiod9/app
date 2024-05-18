@@ -110,7 +110,7 @@ const ConnectModal = forwardRef<HTMLDivElement, ConnectModalProps>(({ showModal,
                             <div className={`sm:hidden fixed inset-0 flex items-center justify-center z-50 backdrop-filter backdrop-opacity-70 ${showModal ? 'slide-in' : ''}`}>
                                 <div className="bg-bg w-full max-w-md mx-auto rounded-xl shadow-lg text-center pb-2.5">
                                     <div className="relative flex flex-col items-center">
-                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto' onClick={handleModal}>
+                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto'>
                                             Connect your wallet
                                         </div>
                                         <div className='right-5 top-4 text-sm absolute font-extralight flex justify-center mx-auto hover:opacity-80' onClick={handleModal}>
@@ -170,7 +170,7 @@ const ConnectModal = forwardRef<HTMLDivElement, ConnectModalProps>(({ showModal,
                             <div className={`hidden sm:absolute inset-0 sm:flex items-center justify-center z-50 backdrop-filter backdrop-opacity-70 ${showModal ? 'slide-in h-screen' : ''}`}>
                                 <div className="bg-bg w-full max-w-md mx-auto rounded-xl shadow-lg text-center pb-2.5 border border-bg/50">
                                     <div className="relative flex flex-col items-center">
-                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto' onClick={handleModal}>
+                                        <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto'>
                                             Connect your wallet
                                         </div>
                                         <div className='right-5 top-4 text-sm absolute font-extralight flex justify-center mx-auto hover:opacity-80' onClick={handleModal}>

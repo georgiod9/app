@@ -10,8 +10,8 @@ const QModal = forwardRef<HTMLDivElement, QModalProps>(({ text, w }, ref) => {
         <>
             <div
                 ref={ref}
-                className={`absolute  bg-red rounded-lg bg-opacity-100 z-50 p-2 text-xs text-[#0d0d0d] font-[350]`}
-                style={{ width: `${w}px`, left: '50%', transform: 'translateX(-50%)', bottom: 'calc(100% + 0.5rem)' }}
+                className={`absolute bg-red rounded-lg bg-opacity-100 z-50 p-2 text-xs text-[#0d0d0d] font-[350]`}
+                style={{ width: `${w}px`, left: '95%', transform: 'translateX(-95%)', bottom: 'calc(100% + 0.5rem)' }}
             >
                 {text}
             </div>
