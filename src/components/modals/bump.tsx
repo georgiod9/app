@@ -9,13 +9,13 @@ interface BumpModalProps {
     tokenTicker: string,
     tokenName: string,
     tokenImage: string,
-    bumpPackage: number,
+    bot: number,
     duration: number,
     funding: number,
     fee: number,
 }
 
-const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, closeModal, tokenAddress, tokenName, tokenTicker, tokenImage, bumpPackage, duration, funding, fee }, ref) => {
+const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, closeModal, tokenAddress, tokenName, tokenTicker, tokenImage, bot, duration, funding, fee }, ref) => {
 
     useEffect(() => {
         const handleScroll = (event: Event) => {
@@ -87,19 +87,19 @@ const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, close
                                                                     <p className='text-white py-0.5 font-[600]'>{tokenName} [ticker: {tokenTicker}]</p>
                                                                     <p className='text-white py-0.5'>{formatAddress(tokenAddress)}</p>
                                                                     <p className='text-white py-0.5'>
-                                                                        {bumpPackage == 1 && <>Light Bump</>}
-                                                                        {bumpPackage == 2 && <>Keep it Bumping</>}
-                                                                        {bumpPackage == 3 && <>Max Bumping</>}
+                                                                        {bot == 3 && <>Light Bump</>}
+                                                                        {bot == 10 && <>Keep it Bumping</>}
+                                                                        {bot == 25 && <>Max Bumping</>}
                                                                     </p>
                                                                     <p className='py-0.5 text-white'>
-                                                                        {bumpPackage == 1 && <>3 </>}
-                                                                        {bumpPackage == 2 && <>10 </>}
-                                                                        {bumpPackage == 3 && <>25 </>}
+                                                                        {bot == 3 && <>3 </>}
+                                                                        {bot == 10 && <>10 </>}
+                                                                        {bot == 25 && <>25 </>}
                                                                         Bots</p>
                                                                     <p className='py-0.5 text-white'>
-                                                                        {bumpPackage == 1 && <>60 </>}
-                                                                        {bumpPackage == 2 && <>30 </>}
-                                                                        {bumpPackage == 3 && <>5 </>}
+                                                                        {bot == 3 && <>60 </>}
+                                                                        {bot == 10 && <>30 </>}
+                                                                        {bot == 25 && <>10 </>}
                                                                         sec</p>
                                                                     <p className='py-0.5 text-white'>{duration} hr</p>
                                                                 </div>
@@ -169,19 +169,19 @@ const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, close
                                                                     <p className='text-white py-0.5 font-[600]'>{tokenName} [ticker: {tokenTicker}]</p>
                                                                     <p className='text-white py-0.5'>{formatAddress(tokenAddress)}</p>
                                                                     <p className='text-white py-0.5'>
-                                                                        {bumpPackage == 1 && <>Light Bump</>}
-                                                                        {bumpPackage == 2 && <>Keep it Bumping</>}
-                                                                        {bumpPackage == 3 && <>Max Bumping</>}
+                                                                        {bot == 3 && <>Light Bump</>}
+                                                                        {bot == 10 && <>Keep it Bumping</>}
+                                                                        {bot == 25 && <>Max Bumping</>}
                                                                     </p>
                                                                     <p className='py-0.5 text-white'>
-                                                                        {bumpPackage == 1 && <>3 </>}
-                                                                        {bumpPackage == 2 && <>10 </>}
-                                                                        {bumpPackage == 3 && <>25 </>}
+                                                                        {bot == 3 && <>3 </>}
+                                                                        {bot == 10 && <>10 </>}
+                                                                        {bot == 25 && <>25 </>}
                                                                         Bots</p>
                                                                     <p className='py-0.5 text-white'>
-                                                                        {bumpPackage == 1 && <>60 </>}
-                                                                        {bumpPackage == 2 && <>30 </>}
-                                                                        {bumpPackage == 3 && <>5 </>}
+                                                                        {bot == 3 && <>60 </>}
+                                                                        {bot == 10 && <>30 </>}
+                                                                        {bot == 25 && <>10 </>}
                                                                         sec</p>
                                                                     <p className='py-0.5 text-white'>{duration} hr</p>
                                                                 </div>

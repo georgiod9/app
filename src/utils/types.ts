@@ -50,7 +50,6 @@ export type OrderData = {
 }
 
 export type OrderStateData = {
-    id: number,
     pk: string[],
 }
 

@@ -5,12 +5,6 @@ interface Coin {
     coin?: string;
 }
 
-// https://client-api-2-74b1891ee9f9.herokuapp.com/coins/dYvcpv8aSJtRhwMResYwvonEB2rM52AuBXhFZcV882c
-
-// COINS EXAMPLES 👇
-// 4b1L4rxkaH1aefRmQewqX9hbKhwUHCPG5FVivtHRejkX
-// dYvcpv8aSJtRhwMResYwvonEB2rM52AuBXhFZcV882c
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
         const { coin } = req.query as Coin

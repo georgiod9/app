@@ -8,10 +8,10 @@ import Spinner from '@/utils/spinner';
 import QModal from '@/components/utils/hoverpr';
 //import { BlockTimestamp } from '@solana/web3.js'
 import { solana } from '@/constants'
-import { type OrderData, type OrderStateModalRefType, type BumpModalRefType } from '@/utils/types'
+import { type OrderStateModalRefType, type BumpModalRefType } from '@/utils/types'
 import BumpModal from '@/components/modals/bump'
 import OrderStateModal from '@/components/modals/state'
-import { orderDataExample } from '@/utils/examples_data'
+import { IOrder } from '@/utils/interfaces'
 
 const Profile = () => {
 
@@ -19,8 +19,9 @@ const Profile = () => {
     const { addr } = router.query as { addr: string }
     const { connected, publicKey } = useWallet()
 
-    const [bumpData, setBumpData] = useState<OrderData[]>([]);
+    const [bumpData, setBumpData] = useState<IOrder[]>([]);
     const [bumpDataLoaded, setBumpDataLoaded] = useState(false)
+    const [errorLoading, setErrorLoading] = useState(false)
 
     const [QModalOpen, setQModalOpen] = useState(false)
     const [QModalOpen1, setQModalOpen1] = useState(false)
@@ -55,8 +56,8 @@ const Profile = () => {
             getSolTimestamp()
     }, [solanaTimestamp])
 
-    const formatTimestamp = (timestamp: number): string => {
-        const date = new Date(timestamp * 1000)
+    const formatTimestamp = (timestamp: Date): string => {
+        const date = new Date(timestamp)
         const ymd: Intl.DateTimeFormatOptions = {
             year: '2-digit',
             month: '2-digit',
@@ -71,13 +72,43 @@ const Profile = () => {
         return date.toLocaleDateString(undefined, ymd) + '-' + date.toLocaleTimeString(undefined, hms)
     };
 
-
-    async function loadBumpers(addr: any) {
-        setTimeout(() => {
-            setBumpDataLoaded(true)
-            setBumpData(orderDataExample)
-            // TODO - getOrderForAddress(addr)
-        }, 1500)
+    async function loadBumpers(addr: string) {
+        let data = [] as IOrder[]
+        let i = 0
+        setBumpDataLoaded(false)
+        const encodedAddr = encodeURIComponent(addr);
+        const orders = await fetch(`/api/uo/${encodedAddr}`);
+        const ordersdata = await orders.json()
+        if (!orders.ok) {
+            setErrorLoading(true)
+            throw new Error('Failed to fetch order data')
+        }
+        // data.push(ordersdata.orders)
+        // console.log(ordersdata.orders)
+        // console.log(data[0])
+        // console.log("request ok for", addr)
+        // console.log("Response status:", orders.status)
+        // console.log("data", ordersdata.orders)
+        // console.log(ordersdata.orders.length)
+        //FOR EACH ordersdata.ORDERS, FETCH COIN AND SET : tokenName - tokenImage - tokenTicker
+        for (i = 0; ordersdata.orders.length > i; i++) {
+            const order = ordersdata.orders[i]
+            const token = await fetch(`/api/getcoin/${order.token}`);
+            const tokendata = await token.json()
+            if (!token.ok) {
+                setErrorLoading(true)
+                throw new Error('Failed to fetch token data')
+            }
+            order.tokenName = tokendata.coinData.name
+            order.tokenImage = tokendata.coinData.image_uri
+            order.tokenTicker = tokendata.coinData.symbol
+            data.push(...ordersdata.orders);
+            // console.log("data to fit", ordersdata.orders)
+            // console.log("data before push", data)
+            // data.push(tokenName)
+        }
+        setBumpData(data)
+        setBumpDataLoaded(true)
     }
 
     const [tokenAddress, setTokenAddress] = useState('')
@@ -101,10 +132,11 @@ const Profile = () => {
         }
     }
 
+    const [bot, setBot] = useState(0)
     const [tokenName, setTokenName] = useState('')
     const [tokenTicker, setTokenTicker] = useState('')
     const [tokenImage, setTokenImage] = useState('')
-    const [bumpPackage, setBumpPackage] = useState(0)
+    //const [bumpPackage, setBumpPackage] = useState(0)
     const [duration, setDuration] = useState(0)
     const [funding, setFunding] = useState(0)
     const [fee, setFee] = useState(0)
@@ -116,13 +148,13 @@ const Profile = () => {
         setBumpModalOpen(prevState => !prevState)
     }
 
-    const setPropsAndHandleBumpModal = (token: string, name: string, ticker: string, image: string, pack: number, duration: number, funding: number, fee: number) => {
+    const setPropsAndHandleBumpModal = (token: string, name: string, ticker: string, image: string, bot: number, duration: number, funding: number, fee: number) => {
         if (!isBumpModalOpen) {
             setTokenAddress(token)
             setTokenName(name)
             setTokenTicker(ticker)
             setTokenImage(image)
-            setBumpPackage(pack)
+            setBot(bot)
             setDuration(duration)
             setFunding(funding)
             setFee(fee)
@@ -157,15 +189,15 @@ const Profile = () => {
                                 <h2 className='lg:my-5 md:my-4 my-2 text-lg italic font-light flex justify-start mx-auto'>
                                     Bumpers
                                 </h2>
-                                {bumpDataLoaded ? <>
+                                {!errorLoading && bumpDataLoaded ? <>
                                     {bumpData.length > 0 ? <>
                                         <div id='user-bump' style={{ maxHeight: '530px', overflowY: 'auto' }}>
-                                            {bumpData.map((data, index) => (
+                                            {[...bumpData].reverse().map((data, index) => (
                                                 <div key={index} className='w-full rounded-md bg-[#FFFFFF1A] mt-3 md:mt-2 lg:mt-0 px-2 py-2 my-2.5 md:my-4'>
                                                     <div className='h-fit w-full items-center block sm:px-1.5 py-1'>
                                                         <div className='flex justify-between mx-auto w-full'>
                                                             <span className='text-[#FFF] text-xs md:text-sm font-[600]'>{data.tokenName} [ticker: {data.tokenTicker}]</span>
-                                                            <button onClick={() => setPropsAndHandleOrderStateModal(data.id, data.tokenAddress, data.status)} className='hidden sm:block text-[#FFF] text-xs md:text-sm font-extralight hover:opacity-80'>[Infos]</button>
+                                                            <button onClick={() => setPropsAndHandleOrderStateModal(data.id, data.token, data.status)} className='hidden sm:block text-[#FFF] text-xs md:text-sm font-extralight hover:opacity-80'>[Infos]</button>
                                                         </div>
                                                         <div className='mt-2.5 flex flex-row row-span-2 h-fit'>
                                                             <div className='w-1/3 md:w-[40%] h-[90px] md:h-[180px]'>
@@ -184,11 +216,11 @@ const Profile = () => {
                                                                     </div>
                                                                     <div id='data' className='mx-1 md:mx-2.5'>
                                                                         <p className='text-white'>
-                                                                            {data.bumpPackage == 1 && <>Light Bump</>}
-                                                                            {data.bumpPackage == 2 && <>Keep it Bumping</>}
-                                                                            {data.bumpPackage == 3 && <>Max Bumping</>}
+                                                                            {data.bot == 3 && <>Light Bump</>}
+                                                                            {data.bot == 10 && <>Keep it Bumping</>}
+                                                                            {data.bot == 25 && <>Max Bumping</>}
                                                                         </p>
-                                                                        <p>{data.botNbr} Bots</p>
+                                                                        <p>{data.bot} Bots</p>
                                                                         <p>{data.frequency} sec</p>
                                                                         <p>{data.duration} hr</p>
                                                                         <p>{data.funding} SOL</p>
@@ -198,7 +230,7 @@ const Profile = () => {
                                                                             {data.status == 'canceled' && <span className='text-red'>Canceled</span>}
                                                                             {data.status == 'finished' && <span className='text-blue'>Expired</span>}
                                                                         </p>
-                                                                        <p>{formatTimestamp(data.placed)}</p>
+                                                                        <p>{formatTimestamp(data.createdAt)}</p>
                                                                     </div>
                                                                 </div>
                                                                 {data.status == 'live' && <>
@@ -246,7 +278,7 @@ const Profile = () => {
                                                                 </>}
                                                                 {data.status == 'finished' && <>
                                                                     <div className='flex relative mt-1.5 items-center gap-x-1'>
-                                                                        <button id='desktop-renew' onClick={() => setPropsAndHandleBumpModal(data.tokenAddress, data.tokenName, data.tokenTicker, data.tokenImage, data.bumpPackage, data.duration, data.funding, data.fee)} className='w-[95%] hidden sm:block bg-white text-bg text-xs py-2 rounded-md'>
+                                                                        <button id='desktop-renew' onClick={() => setPropsAndHandleBumpModal(data.token, data.tokenName, data.tokenTicker, data.tokenImage, data.bot, data.duration, data.funding, data.fee)} className='w-[95%] hidden sm:block bg-white text-bg text-xs py-2 rounded-md'>
                                                                             Renew
                                                                         </button>
                                                                         <button id='mobile-renew' onClick={() => router.push('/')} className='w-full sm:hidden bg-white text-bg text-xs py-2 rounded-md'>
@@ -273,17 +305,26 @@ const Profile = () => {
                                     </>}
                                 </> : <>
                                     <>
-                                        <div id='bump-data-loading' className='w-full h-[530px] rounded-md bg-[#FFFFFF1A] mt-3 md:mt-2 lg:mt-0 px-2 py-2 my-2.5 md:my-4 lg:my-7 flex items-center justify-center'>
-                                            <div className='flex text-center mx-auto justify-center w-full'>
-                                                <Spinner className="w-8 h-8 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                                        {!errorLoading && !bumpDataLoaded && <>
+                                            <div id='bump-data-loading' className='w-full h-[530px] rounded-md bg-[#FFFFFF1A] mt-3 md:mt-2 lg:mt-0 px-2 py-2 my-2.5 md:my-4 lg:my-7 flex items-center justify-center'>
+                                                <div className='flex text-center mx-auto justify-center w-full'>
+                                                    <Spinner className="w-8 h-8 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                                                </div>
                                             </div>
-                                        </div>
+                                        </>}
                                     </>
+                                </>}
+                                {errorLoading && <>
+                                    <div id='bump-data-error' className='w-full h-[530px] rounded-md bg-[#FFFFFF1A] mt-3 md:mt-2 lg:mt-0 px-2 py-2 my-2.5 md:my-4 lg:my-7 flex items-center justify-center'>
+                                        <div className='flex text-center text-xs mx-auto justify-center w-full'>
+                                            <p className='text-red'>Unable to load bumpers. Please try again.</p>
+                                        </div>
+                                    </div>
                                 </>}
                             </div>
                         </div>
                     </div>
-                    {bumpDataLoaded && bumpData.length > 0 && <>
+                    {!errorLoading && bumpDataLoaded && bumpData.length > 0 && <>
                         <div className='mt-4 mb-2.5'>
                             <div className='bg-[#2E303A] rounded-md w-full lg:px-7 md:p-4 p-2.5'>
                                 <button id='mobile-bump-btn' onClick={() => router.push('/')} className='text-bg bg-green w-full rounded-md py-2 hover:opacity-80 md:hidden block'>+ Add New Bump</button>
@@ -297,7 +338,7 @@ const Profile = () => {
                 {isOrderStateModalOpen && <><OrderStateModal showModal={isOrderStateModalOpen} closeModal={handleOrderStateModal} ref={OrderStateModalRef} id={orderStateId} token={tokenAddress} status={orderStatus} /></>}
             </>
             <>
-                {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenAddress} tokenName={tokenName} tokenTicker={tokenTicker} tokenImage={tokenImage} bumpPackage={bumpPackage} duration={duration} funding={funding} fee={fee} /></>}
+                {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenAddress} tokenName={tokenName} tokenTicker={tokenTicker} tokenImage={tokenImage} bot={bot} duration={duration} funding={funding} fee={fee} /></>}
             </>
         </>
     )

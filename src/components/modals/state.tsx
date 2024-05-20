@@ -4,8 +4,9 @@ import Spinner from '@/utils/spinner';
 import * as solWeb3 from "@solana/web3.js";
 import { solana, rpc } from '@/constants';
 //import * as SPLToken from '@solana/spl-token';
-import { orderStateDataExample } from '@/utils/examples_data';
 import axios from 'axios';
+import { orderStateDataExample } from '@/utils/examples_data';
+import { IWallet } from '@/utils/interfaces'
 
 interface OrderStateModalProps {
     showModal: boolean;
@@ -53,6 +54,8 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
 
     const [orderStateLoaded, setOrderStateLoaded] = useState(false)
     const [OrderStateData, setOrderStateData] = useState<OrderStateData[]>([])
+    const [errorLoadingData, setErrorLoadingData] = useState(false)
+
     const [SOLBalance, setSOLBalance] = useState<any>([])
     const [SOLBalanceLoading, setSOLBalanceLoading] = useState(false)
     const [TokenBalance, setTokenBalance] = useState<any>([])
@@ -94,11 +97,22 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
 
 
     async function loadOrder(id: number) {
-        setTimeout(() => {
-            setOrderStateLoaded(true)
-            setOrderStateData(orderStateDataExample)
-            // TODO - getOrderPk(id)
-        }, 1500)
+        setOrderStateLoaded(false)
+        let data = [] as IWallet[]
+        let i = 0
+        const encodedID = encodeURIComponent(id);
+        const res = await fetch(`/api/ow/${encodedID}`);
+        if (!res.ok) {
+            setErrorLoadingData(true)
+            throw new Error('Failed to fetch wallets')
+        }
+        const walletsdata = await res.json()
+        console.log(res)
+        console.log("no", walletsdata)
+        console.log("pk", walletsdata.pk)
+        setOrderStateLoaded(true)
+        // setOrderStateData(walletsdata)
+        setOrderStateData(orderStateDataExample)
     }
 
     useEffect(() => {
@@ -145,7 +159,6 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
             bal = res.data.result.value[0].account.data.parsed.info.tokenAmount.uiAmount
         else bal = 0
         return bal
-        // TODO: FINISH getTokenBal()
     }
 
     return (
@@ -165,7 +178,7 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
                                             [Close]
                                         </div>
                                         {status != 'pending' ? <>
-                                            {orderStateLoaded ? <>
+                                            {!errorLoadingData && orderStateLoaded ? <>
                                                 <div className='w-full mt-10'>
                                                     <div className="mx-5 mt-2.5">
                                                         <div className='mt-5 mb-3 w-full'>
@@ -253,7 +266,7 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
                                                     </div>
                                                 </div>
                                             </> : <>
-                                                <div className='w-full mt-10'>
+                                                {!errorLoadingData && !orderStateLoaded && <div className='w-full mt-10'>
                                                     <div className="mx-5 mt-2.5">
                                                         <div className='mt-5 mb-3 w-full'>
                                                             <div className='w-full bg-[#FFFFFF1A] py-2.5 px-2.5 rounded-md text-sm'>
@@ -263,7 +276,18 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div>}
+                                                {errorLoadingData && !orderStateLoaded && <div className='w-full mt-10'>
+                                                    <div className="mx-5 mt-2.5">
+                                                        <div className='mt-5 mb-3 w-full'>
+                                                            <div className='w-full bg-[#FFFFFF1A] py-2.5 px-2.5 rounded-md text-sm'>
+                                                                <div className='flex text-center text-xs mx-auto justify-center w-full'>
+                                                                    <p className='text-red'>Unable to load bumpers. Please try again.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>}
                                             </>}
                                         </> : <>
                                             <div className='w-full mt-10'>

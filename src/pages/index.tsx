@@ -19,6 +19,7 @@ export default function Home() {
   const { connected, publicKey } = useWallet()
 
   const [bumpPackage, setBumpPackage] = useState(0)
+  const [bot, setBot] = useState(0)
   const [funding, setFunding] = useState('')
   const [duration, setDuration] = useState('')
 
@@ -44,6 +45,16 @@ export default function Home() {
 
   // const [assignNames, setAssignNames] = useState(false)
   // const [reply, setReply] = useState(false
+
+  useEffect(() => {
+    if (bumpPackage == 1) {
+      setBot(3)
+    } else if (bumpPackage == 2) {
+      setBot(10)
+    } else {
+      setBot(25)
+    }
+  }, [bumpPackage])
 
   async function searchContract(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const token = e.target.value
@@ -617,7 +628,7 @@ export default function Home() {
         {isConnectModalOpen && <><ConnectModal showModal={isConnectModalOpen} closeModal={handleConnectModal} ref={ConnectModalRef} /></>}
       </>
       <>
-        {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenData ? tokenData.coinData.mint : ''} tokenName={tokenData ? tokenData.coinData.name : ''} tokenTicker={tokenData ? tokenData.coinData.symbol : ''} tokenImage={tokenData ? tokenData.coinData.image_uri : ''} bumpPackage={bumpPackage} duration={parseFloat(duration) * 24} funding={parseFloat(funding)} fee={serviceFee} /></>}
+        {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenData ? tokenData.coinData.mint : ''} tokenName={tokenData ? tokenData.coinData.name : ''} tokenTicker={tokenData ? tokenData.coinData.symbol : ''} tokenImage={tokenData ? tokenData.coinData.image_uri : ''} bot={bot} duration={parseFloat(duration) * 24} funding={parseFloat(funding)} fee={serviceFee} /></>}
       </>
     </>
   );
