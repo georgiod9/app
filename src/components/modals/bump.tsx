@@ -1,6 +1,10 @@
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
+import Spinner from '@/utils/spinner';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useRouter } from 'next/router';
+import { PublicKey, SystemProgram, TransactionInstruction, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { PROGRAM_ID, ACCOUNT_BOT_PK, ACCOUNT_PROTOCOL_PK, SOLANA } from '@/constants';
+import { Buffer } from 'buffer';
+import bs58 from 'bs58';
 
 interface BumpModalProps {
     showModal: boolean;
@@ -10,12 +14,13 @@ interface BumpModalProps {
     tokenName: string,
     tokenImage: string,
     bot: number,
+    frequency: number,
     duration: number,
     funding: number,
     fee: number,
 }
 
-const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, closeModal, tokenAddress, tokenName, tokenTicker, tokenImage, bot, duration, funding, fee }, ref) => {
+const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, closeModal, tokenAddress, tokenName, tokenTicker, tokenImage, bot, frequency, duration, funding, fee }, ref) => {
 
     useEffect(() => {
         const handleScroll = (event: Event) => {
@@ -50,6 +55,69 @@ const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, close
         const sf = address.substring(address.length - 5)
         return `${pr}...${sf}`
     }
+
+    const { publicKey, sendTransaction } = useWallet()
+    const [txLoading, setTxLoading] = useState(false)
+    const [txError, setTxError] = useState(false)
+    const [txSuccess, setTxSuccess] = useState(false)
+
+    const createOrder = async (token: string, bot: number, freq: number, dur: number, funding: number, fee: number) => {
+        if (!publicKey) return
+        setTxLoading(true)
+        setTxError(false)
+        setTxSuccess(false)
+
+        const tokenAddr = token;
+        const tokenBytes = bs58.decode(tokenAddr);
+        const botNbr = bot;
+        const frequency = freq;
+        const duration = dur;
+        const fundingLp = funding * 100;
+        const feeLp = fee * 100;
+
+        const orderData = Buffer.alloc(46);
+        orderData.set(tokenBytes, 0);
+        orderData.writeUInt8(botNbr, 32);
+        orderData.writeUInt8(frequency, 33);
+        orderData.writeUInt32LE(duration, 34);
+        orderData.writeUInt32LE(fundingLp, 38);
+        orderData.writeUInt32LE(feeLp, 42);
+
+        const instructionData = Buffer.from([1, ...orderData]);
+
+        const programId = new PublicKey(PROGRAM_ID);
+        const accountBotPk = new PublicKey(ACCOUNT_BOT_PK);
+        const accountProtocolPk = new PublicKey(ACCOUNT_PROTOCOL_PK);
+
+        const transaction = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    { pubkey: publicKey, isSigner: true, isWritable: true },
+                    { pubkey: accountProtocolPk, isSigner: false, isWritable: true },
+                    { pubkey: accountBotPk, isSigner: false, isWritable: true },
+                    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+                ],
+                programId,
+                data: instructionData,
+            })
+        );
+
+        try {
+            const txSignature = await sendTransaction(transaction, SOLANA)
+            setTxLoading(true)
+            const ok = await SOLANA.confirmTransaction(txSignature, 'confirmed')
+            if (ok.value.err) {
+                setTxLoading(false)
+                setTxError(true)
+            } else {
+                setTxLoading(false)
+                setTxSuccess(true)
+            }
+        } catch (e) {
+            console.error(e)
+            setTxLoading(false)
+        }
+    };
 
     return (
         <>
@@ -128,8 +196,21 @@ const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, close
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button className='text-bg bg-green w-full rounded-md py-2 hover:opacity-80 block'>Create Bump</button>
+                                                    <button disabled={txSuccess} onClick={() => createOrder(tokenAddress, bot, frequency, duration, funding, fee)} className={`${txSuccess ? 'bg-[#FFFFFF1A] text-[#FFFFFF80]' : 'text-bg bg-green hover:opacity-80'} w-full rounded-md py-2 block`}>
+                                                        {txLoading ? <>
+                                                            <div className='flex justify-center mx-auto my-0.5'>
+                                                                <Spinner className="w-5 h-5 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                                                            </div>
+                                                        </> : <>Create Bump</>}
+                                                    </button>
                                                 </div>
+                                                {txError && <><span className='my-1 flex justify-center mx-auto text-xs text-red'>Transaction failed. Please try again.</span></>}
+                                                {txSuccess && <>
+                                                    <div className='my-1 flex justify-center mx-auto text-xs text-green'>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                                                        <span className='ml-1'>Order placed successfully!</span>
+                                                    </div>
+                                                </>}
                                             </div>
                                         </div>
                                     </div>
@@ -210,8 +291,21 @@ const BumpModal = forwardRef<HTMLDivElement, BumpModalProps>(({ showModal, close
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button className='text-bg bg-green w-full rounded-md py-2 hover:opacity-80 block'>Create Bump</button>
+                                                    <button disabled={txSuccess} onClick={() => createOrder(tokenAddress, bot, frequency, duration, funding, fee)} className={`${txSuccess ? 'bg-[#FFFFFF1A] text-[#FFFFFF80]' : 'text-bg bg-green hover:opacity-80'} w-full rounded-md py-2 block`}>
+                                                        {txLoading ? <>
+                                                            <div className='flex justify-center mx-auto my-0.5'>
+                                                                <Spinner className="w-5 h-5 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                                                            </div>
+                                                        </> : <>Create Bump</>}
+                                                    </button>
                                                 </div>
+                                                {txError && <><span className='my-1 flex justify-center mx-auto text-xs text-red'>Transaction failed. Please try again.</span></>}
+                                                {txSuccess && <>
+                                                    <div className='my-1 flex justify-center mx-auto text-xs text-green'>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                                                        <span className='ml-1'>Order placed successfully!</span>
+                                                    </div>
+                                                </>}
                                             </div>
                                         </div>
                                     </div>

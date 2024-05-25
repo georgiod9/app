@@ -4,23 +4,27 @@ import Navbar from '@/components/navbar';
 import { useState, useRef, useEffect } from 'react';
 import Spinner from '@/utils/spinner';
 import Insight from '@/components/insight';
-//import { Switch } from '@headlessui/react'
 import Image from 'next/image';
 import ConnectModal from '@/components/modals/connect';
-//import { solana } from '@/constants';
 import { type CoinData, type ConnectModalRefType, type BumpModalRefType } from '@/utils/types';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey, SystemProgram, TransactionInstruction, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { PROGRAM_ID, ACCOUNT_BOT_PK, ACCOUNT_PROTOCOL_PK, SOLANA } from '@/constants';
+import { Buffer } from 'buffer';
+import bs58 from 'bs58';
 import QModal from '@/components/utils/hover';
 //import Slider from 'rc-slider';
-import BumpModal from '@/components/modals/bump';
+//import { Switch } from '@headlessui/react'
+// import BumpModal from '@/components/modals/bump';
 
 export default function Home() {
 
-  const { connected, publicKey } = useWallet()
+  const { connected, publicKey, sendTransaction } = useWallet()
 
   const [bumpPackage, setBumpPackage] = useState(0)
   const [bot, setBot] = useState(0)
   const [funding, setFunding] = useState('')
+  const [frequency, setFrequency] = useState(0)
   const [duration, setDuration] = useState('')
 
   const [tokenContract, setTokenContract] = useState('')
@@ -242,6 +246,30 @@ export default function Home() {
     }
   }, [bumpPackage, tokenFound, funding, duration])
 
+  useEffect(() => {
+    if (bumpPackage == 1) {
+      setFrequency(60)
+    } else if (bumpPackage == 2) {
+      setFrequency(30)
+    } else if (bumpPackage == 3) {
+      setFrequency(5)
+    }
+  }, [bumpPackage])
+
+
+  const [bal, setBal] = useState<any>(0)
+
+  useEffect(() => {
+    const getSolBal = async (publicKey: any) => {
+      const bal = await SOLANA.getBalanceAndContext(publicKey)
+      const balance = bal.value / (10 ** 9)
+      setBal(balance)
+    }
+    if (connected && publicKey) {
+      getSolBal(publicKey)
+    }
+  }, [connected, publicKey])
+
   function bump(bumpPackage: number, tokenFound: boolean, duration: string) {
     if (!connected && !publicKey) {
       handleConnectModal()
@@ -256,18 +284,75 @@ export default function Home() {
         alert('Funding not set.')
       } else if (fundingTooLow) {
         alert('Funding too low.')
+      } else if (totalPrice > bal) {
+        alert('Balance too low.')
       } else {
-        handleBumpModal()
+        createOrder(tokenContract, bot, frequency, parseFloat(duration) * 24, parseFloat(funding), serviceFee)
       }
     }
   }
 
-  const BumpModalRef = useRef<BumpModalRefType>(null)
-  const [isBumpModalOpen, setBumpModalOpen] = useState(false)
+  const [txLoading, setTxLoading] = useState(false)
+  const [txError, setTxError] = useState(false)
+  const [txSuccess, setTxSuccess] = useState(false)
 
-  const handleBumpModal = () => {
-    setBumpModalOpen(prevState => !prevState)
-  }
+  const createOrder = async (token: string, bot: number, freq: number, dur: number, funding: number, fee: number) => {
+    if (!publicKey) return
+    setTxLoading(true)
+    setTxError(false)
+    setTxSuccess(false)
+
+    const tokenAddr = token;
+    const tokenBytes = bs58.decode(tokenAddr);
+    const botNbr = bot;
+    const frequency = freq;
+    const duration = dur;
+    const fundingLp = funding * 100;
+    const feeLp = fee * 100;
+
+    const orderData = Buffer.alloc(46);
+    orderData.set(tokenBytes, 0);
+    orderData.writeUInt8(botNbr, 32);
+    orderData.writeUInt8(frequency, 33);
+    orderData.writeUInt32LE(duration, 34);
+    orderData.writeUInt32LE(fundingLp, 38);
+    orderData.writeUInt32LE(feeLp, 42);
+
+    const instructionData = Buffer.from([1, ...orderData]);
+
+    const programId = new PublicKey(PROGRAM_ID);
+    const accountBotPk = new PublicKey(ACCOUNT_BOT_PK);
+    const accountProtocolPk = new PublicKey(ACCOUNT_PROTOCOL_PK);
+
+    const transaction = new Transaction().add(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: publicKey, isSigner: true, isWritable: true },
+          { pubkey: accountProtocolPk, isSigner: false, isWritable: true },
+          { pubkey: accountBotPk, isSigner: false, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        ],
+        programId,
+        data: instructionData,
+      })
+    );
+
+    try {
+      const txSignature = await sendTransaction(transaction, SOLANA)
+      setTxLoading(true)
+      const ok = await SOLANA.confirmTransaction(txSignature, 'confirmed')
+      if (ok.value.err) {
+        setTxLoading(false)
+        setTxError(true)
+      } else {
+        setTxLoading(false)
+        setTxSuccess(true)
+      }
+    } catch (e) {
+      console.error(e)
+      setTxLoading(false)
+    }
+  };
 
   return (
     <>
@@ -557,7 +642,20 @@ export default function Home() {
               <div id='bump-btn' className='lg:my-5 md:my-3 my-2 w-full lg:flex lg:flex-row lg:row-span-2 lg:gap-x-8'>
                 <div className='w-full hidden lg:block' />
                 <div className='w-full'>
-                  <button disabled={!bumpOk} onClick={() => bump(bumpPackage, tokenFound, duration)} className={`font-[400] text-sm w-full rounded-md px-10 py-2 lg:py-3 ${bumpOk ? 'text-bg bg-green hover:opacity-80' : 'bg-[#FFFFFF1A] text-[#FFFFFF80]'}`}>Start Bumping</button>
+                  <button disabled={!bumpOk || txSuccess} onClick={() => bump(bumpPackage, tokenFound, duration)} className={`font-[400] text-sm w-full rounded-md px-10 py-2 lg:py-3 ${bumpOk && !txSuccess ? 'text-bg bg-green hover:opacity-80' : 'bg-[#FFFFFF1A] text-[#FFFFFF80]'}`}>
+                    {txLoading ? <>
+                      <div className='flex justify-center mx-auto'>
+                        <Spinner className="w-5 h-5 spinner text-[#FFFFFF80] animate-spin fill-white" />
+                      </div>
+                    </> : <>
+                      {txSuccess ? <>
+                        <div className='my-0.5 flex justify-center mx-auto text-xs text-green'>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                          <span className='ml-1'>Order placed successfully!</span>
+                        </div>
+                      </> : <>Start Bumping</>}
+                    </>}
+                  </button>
                 </div>
               </div>
               {/* <div id='additionals-details' className='mt-2.5 w-full rounded-md bg-[#FFFFFF1A] px-2 py-2'>
@@ -626,9 +724,6 @@ export default function Home() {
       </div >
       <>
         {isConnectModalOpen && <><ConnectModal showModal={isConnectModalOpen} closeModal={handleConnectModal} ref={ConnectModalRef} /></>}
-      </>
-      <>
-        {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenData ? tokenData.coinData.mint : ''} tokenName={tokenData ? tokenData.coinData.name : ''} tokenTicker={tokenData ? tokenData.coinData.symbol : ''} tokenImage={tokenData ? tokenData.coinData.image_uri : ''} bot={bot} duration={parseFloat(duration) * 24} funding={parseFloat(funding)} fee={serviceFee} /></>}
       </>
     </>
   );

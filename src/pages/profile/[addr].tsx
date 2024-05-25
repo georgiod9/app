@@ -3,21 +3,23 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { WebsiteName, WebsiteSlogan, WebsiteURL } from '@/constants'
 import Navbar from '@/components/navbar'
-import { useWallet } from '@solana/wallet-adapter-react';
 import Spinner from '@/utils/spinner';
 import QModal from '@/components/utils/hoverpr';
 //import { BlockTimestamp } from '@solana/web3.js'
-import { solana } from '@/constants'
 import { type OrderStateModalRefType, type BumpModalRefType } from '@/utils/types'
 import BumpModal from '@/components/modals/bump'
 import OrderStateModal from '@/components/modals/state'
 import { IOrder } from '@/utils/interfaces'
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey, TransactionInstruction, Transaction, SystemProgram } from '@solana/web3.js';
+import { PROGRAM_ID, SOLANA } from '@/constants';
+import { Buffer } from 'buffer';
 
 const Profile = () => {
 
     const router = useRouter()
     const { addr } = router.query as { addr: string }
-    const { connected, publicKey } = useWallet()
+    const { connected, publicKey, sendTransaction } = useWallet()
 
     const [bumpData, setBumpData] = useState<IOrder[]>([]);
     const [bumpDataLoaded, setBumpDataLoaded] = useState(false)
@@ -40,8 +42,8 @@ const Profile = () => {
     }, [addr, connected, publicKey])
 
     async function getSolTimestamp() {
-        const slot = await solana.getSlot()
-        const timestamp = await solana.getBlockTime(slot)
+        const slot = await SOLANA.getSlot()
+        const timestamp = await SOLANA.getBlockTime(slot)
         if (timestamp != null) {
             setSolanaTimestamp(timestamp)
         } else {
@@ -137,6 +139,7 @@ const Profile = () => {
     const [tokenTicker, setTokenTicker] = useState('')
     const [tokenImage, setTokenImage] = useState('')
     //const [bumpPackage, setBumpPackage] = useState(0)
+    const [frequency, setFrequency] = useState(0)
     const [duration, setDuration] = useState(0)
     const [funding, setFunding] = useState(0)
     const [fee, setFee] = useState(0)
@@ -148,13 +151,14 @@ const Profile = () => {
         setBumpModalOpen(prevState => !prevState)
     }
 
-    const setPropsAndHandleBumpModal = (token: string, name: string, ticker: string, image: string, bot: number, duration: number, funding: number, fee: number) => {
+    const setPropsAndHandleBumpModal = (token: string, name: string, ticker: string, image: string, bot: number, frequency: number, duration: number, funding: number, fee: number) => {
         if (!isBumpModalOpen) {
             setTokenAddress(token)
             setTokenName(name)
             setTokenTicker(ticker)
             setTokenImage(image)
             setBot(bot)
+            setFrequency(frequency)
             setDuration(duration)
             setFunding(funding)
             setFee(fee)
@@ -164,6 +168,53 @@ const Profile = () => {
         }
     }
 
+    const [txLoading, setTxLoading] = useState(false)
+    const [txError, setTxError] = useState(false)
+    const [txSuccess, setTxSuccess] = useState(false)
+
+    function buildCancelInstructionData(orderId: number) {
+        const instructionData = Buffer.alloc(5)
+        instructionData.writeUInt32LE(orderId, 1)
+        instructionData[0] = 2
+        return instructionData
+    }
+
+    async function cancelOrder(orderId: number) {
+        if (!publicKey) return
+        setTxLoading(true)
+        setTxError(false)
+        setTxSuccess(false)
+
+        const instructionData = buildCancelInstructionData(orderId)
+        const programId = new PublicKey(PROGRAM_ID);
+
+        const transaction = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    { pubkey: publicKey, isSigner: true, isWritable: true },
+                    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+                ],
+                programId,
+                data: instructionData,
+            })
+        );
+
+        try {
+            const txSignature = await sendTransaction(transaction, SOLANA)
+            setTxLoading(true)
+            const ok = await SOLANA.confirmTransaction(txSignature, 'confirmed')
+            if (ok.value.err) {
+                setTxLoading(false)
+                setTxError(true)
+            } else {
+                setTxLoading(false)
+                setTxSuccess(true)
+            }
+        } catch (e) {
+            console.error(e)
+            setTxLoading(false)
+        }
+    }
 
     return (
         <>
@@ -235,8 +286,19 @@ const Profile = () => {
                                                                 </div>
                                                                 {data.status == 'live' && <>
                                                                     <div className='flex relative mt-1.5 items-center gap-x-1'>
-                                                                        <button onClick={() => alert('cancelModal or directTx?')} className='sm:w-[90%] w-full bg-white text-bg text-xs py-2 rounded-md'>
-                                                                            Cancel & Withdraw
+                                                                        <button disabled={txSuccess} onClick={() => cancelOrder(data.id)} className={`sm:w-[90%] w-full ${txSuccess ? 'bg-[#FFFFFF1A] text-[#FFFFFF80]' : 'bg-white text-bg hover:opacity-80'} text-xs py-2 rounded-md`}>
+                                                                            {txLoading ? <>
+                                                                                <div className='flex justify-center mx-auto my-0.5'>
+                                                                                    <Spinner className="w-3 h-3 spinner text-bg animate-spin fill-[#FFFFFF80]" />
+                                                                                </div>
+                                                                            </> : <>
+                                                                                {txSuccess ? <>
+                                                                                    <div className='flex justify-center mx-auto text-xs text-green'>
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                                                                                        <span className='ml-1'>Order canceled</span>
+                                                                                    </div>
+                                                                                </> : <>Cancel & Withdraw</>}
+                                                                            </>}
                                                                         </button>
                                                                         <span className='w-[10%] hidden sm:flex justify-center items-center'>
                                                                             <div className='absolute'>
@@ -278,7 +340,7 @@ const Profile = () => {
                                                                 </>}
                                                                 {data.status == 'finished' && <>
                                                                     <div className='flex relative mt-1.5 items-center gap-x-1'>
-                                                                        <button id='desktop-renew' onClick={() => setPropsAndHandleBumpModal(data.token, data.tokenName, data.tokenTicker, data.tokenImage, data.bot, data.duration, data.funding, data.fee)} className='w-[95%] hidden sm:block bg-white text-bg text-xs py-2 rounded-md'>
+                                                                        <button id='desktop-renew' onClick={() => setPropsAndHandleBumpModal(data.token, data.tokenName, data.tokenTicker, data.tokenImage, data.bot, data.frequency, data.duration, data.funding, data.fee)} className='w-[95%] hidden sm:block bg-white text-bg text-xs py-2 rounded-md'>
                                                                             Renew
                                                                         </button>
                                                                         <button id='mobile-renew' onClick={() => router.push('/')} className='w-full sm:hidden bg-white text-bg text-xs py-2 rounded-md'>
@@ -338,7 +400,7 @@ const Profile = () => {
                 {isOrderStateModalOpen && <><OrderStateModal showModal={isOrderStateModalOpen} closeModal={handleOrderStateModal} ref={OrderStateModalRef} id={orderStateId} token={tokenAddress} status={orderStatus} /></>}
             </>
             <>
-                {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenAddress} tokenName={tokenName} tokenTicker={tokenTicker} tokenImage={tokenImage} bot={bot} duration={duration} funding={funding} fee={fee} /></>}
+                {isBumpModalOpen && <><BumpModal showModal={isBumpModalOpen} closeModal={handleBumpModal} ref={BumpModalRef} tokenAddress={tokenAddress} tokenName={tokenName} tokenTicker={tokenTicker} tokenImage={tokenImage} bot={bot} frequency={frequency} duration={duration} funding={funding} fee={fee} /></>}
             </>
         </>
     )

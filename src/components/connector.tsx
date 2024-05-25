@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import Spinner from '@/utils/spinner';
 import ConnectModal from '@/components/modals/connect';
 import DisconnectModal from '@/components/modals/disconnect';
-import { solana } from '@/constants';
+import { SOLANA } from '@/constants';
 import { useWallet, type Wallet } from '@solana/wallet-adapter-react';
 
 type ConnectModalRefType = HTMLDivElement | null
@@ -23,7 +23,7 @@ const Connector = () => {
     useEffect(() => {
         const getSolBal = async (publicKey: any) => {
             if (publicKey) {
-                const bal = await solana.getBalanceAndContext(publicKey)
+                const bal = await SOLANA.getBalanceAndContext(publicKey)
                 const fbal = balanceToStr(bal.value)
                 setBal(fbal)
             } else {

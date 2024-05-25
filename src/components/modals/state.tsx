@@ -2,7 +2,7 @@ import { forwardRef, Key, useEffect, useState } from 'react';
 import { type OrderStateData } from '@/utils/types';
 import Spinner from '@/utils/spinner';
 import * as solWeb3 from "@solana/web3.js";
-import { solana, rpc } from '@/constants';
+import { SOLANA, RPC } from '@/constants';
 //import * as SPLToken from '@solana/spl-token';
 import axios from 'axios';
 import { orderStateDataExample } from '@/utils/examples_data';
@@ -122,7 +122,7 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
 
     async function getSolBal(address: string) {
         const pk = new solWeb3.PublicKey(address)
-        const bal = await solana.getBalanceAndContext(pk)
+        const bal = await SOLANA.getBalanceAndContext(pk)
         const fbal = balanceToStr(bal.value)
         return fbal
     }
@@ -136,7 +136,7 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
 
     async function getTokenBal(address: string, token: string) {
         const res = await axios({
-            url: `${rpc}`,
+            url: `${RPC}`,
             method: "post",
             headers: { "Content-Type": "application/json" },
             data: {
