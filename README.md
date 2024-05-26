@@ -1,8 +1,4 @@
-## STAY TO DO
-
-- ⚠️ Incorrect amount sent to tx if funding > 10 ?
-- Upgrade State Modal (getTokenBalance for each wallets)
-- CLEAN
+- FIXED
 
 ## Figma
 

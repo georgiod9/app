@@ -193,7 +193,7 @@ export default function Home() {
   const calcServicesFees = (bump: number, funding: string, duration: string) => {
     let service = 0
     let fundNbr = parseFloat(funding)
-    let fundFee = (fundNbr * 0.2)
+    let fundFee = (fundNbr * 0.02)
     let dayNbr = parseFloat(duration)
     if (bump == 1) {
       service = 0.05

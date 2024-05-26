@@ -136,7 +136,7 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
 
     async function getTokenBal(address: string, token: string) {
         const res = await axios({
-            url: `${RPC}`,
+            url: `https://lingering-damp-lambo.solana-mainnet.quiknode.pro/41ced52afd17c1798eb1b6524ae12a981521a1d4`,
             method: "post",
             headers: { "Content-Type": "application/json" },
             data: {
@@ -172,7 +172,8 @@ const OrderStateModal = forwardRef<HTMLDivElement, OrderStateModalProps>(({ show
                                 <div className="bg-bg w-full max-w-3xl mx-auto rounded-xl shadow-lg text-center pb-2.5 border border-bg/50">
                                     <div className="relative flex flex-col items-center">
                                         <div className='left-5 top-3 text-xl italic absolute font-light flex justify-center mx-auto'>
-                                            Order #{id} Details
+                                            {/* Order #{id} Details */}
+                                            Order State
                                         </div>
                                         <div className='right-5 top-4 text-sm absolute font-extralight flex justify-center mx-auto hover:opacity-80' onClick={handleModal}>
                                             [Close]
