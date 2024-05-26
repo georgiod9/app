@@ -17,6 +17,6 @@ export const NETWORK = 'devnet'
 export const RPC = 'https://api.devnet.solana.com'
 
 export const SOLANA = new solWeb3.Connection(RPC, 'confirmed');
-export const PROGRAM_ID = '754YF9JKMHfBWZyiBg2iRnyWyw7aCzyRJwZs3f2Ld3eE';
+export const PROGRAM_ID = '4hpHCxM1mT1TfrxPzcvQRYSkf2Jaf3nuTY6F1ZQEXZfB';
 export const ACCOUNT_BOT_PK = 'J2R22pquB6YC45oo6gyjMEnAztdQ8mXZ6sCXmBFn8Sdj'
 export const ACCOUNT_PROTOCOL_PK = '2LEHP4cHHYd1qWi21AgBMdPFHL9EbMKbk16hQzqnGtps'
