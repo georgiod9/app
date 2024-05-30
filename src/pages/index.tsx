@@ -25,7 +25,7 @@ export default function Home() {
   const [bot, setBot] = useState(0)
   const [funding, setFunding] = useState('')
   const [frequency, setFrequency] = useState(0)
-  const [duration, setDuration] = useState('')
+  const [duration, setDuration] = useState('1')
 
   const [tokenContract, setTokenContract] = useState('')
   const [tokenError, setTokenError] = useState('')
@@ -252,7 +252,7 @@ export default function Home() {
     } else if (bumpPackage == 2) {
       setFrequency(30)
     } else if (bumpPackage == 3) {
-      setFrequency(5)
+      setFrequency(10)
     }
   }, [bumpPackage])
 
@@ -455,7 +455,7 @@ export default function Home() {
                         <h3 className='font-[600] text-lg'>Max Bumping to Radyium</h3>
                         <span className='sm:hidden py-0.5 font-[500] text-md'>0.2 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
                         <p className='font-[400] text-sm opacity-50 py-1.5 sm:py-0 sm:pt-2 sm:pb-1.5'>25 Wallet Bumping the Token</p>
-                        <p className='font-[400] text-sm opacity-50'>1 Bump per 5 Seconds</p>
+                        <p className='font-[400] text-sm opacity-50'>1 Bump per 10 Seconds</p>
                       </div>
                       <div className='hidden sm:block sm:w-[25%]'>
                         <span className='flex items-center justify-end py-0.5 font-[500] text-md'>0.2 Sol<span className='opacity-50 text-sm font-[400] pl-1'>/day</span></span>
