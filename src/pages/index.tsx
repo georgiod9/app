@@ -414,7 +414,7 @@ export default function Home() {
       <Navbar />
       <div className="block justify-center md:mt-0 md:max-w-xl lg:max-w-6xl md:mx-auto mx-2.5">
         <div id='hero' className='mt-20 md:mt-28'>
-          <h1 className='text-lg md:text-2xl lg:text-4xl md:text-center text-start font-[400]'>Our Bots keep your token Bumping on Pump Dot Fun. A guaranteed Radyium listing!</h1>
+          <h1 className='text-lg md:text-2xl lg:text-4xl md:text-center text-start font-[400]'>Our Bots keep your token Bumping on Pump Dot Fun.</h1>
         </div>
         <div id='insights' className='md:flex md:justify-center md:mx-auto my-5 md:my-8'>
           <Insight />
