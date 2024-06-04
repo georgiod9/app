@@ -42,6 +42,9 @@ export default function Home() {
   const [serviceFee, setServiceFee] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
 
+  const [serviceFeeUI, setServiceFeeUI] = useState(0)
+  const [totalPriceUI, setTotalPriceUI] = useState(0)
+
   const [fundingNotSet, setFundingNotSet] = useState(false)
   const [fundingTooLow, setFundingTooLow] = useState(false)
 
@@ -193,7 +196,7 @@ export default function Home() {
   const calcServicesFees = (bump: number, funding: string, duration: string) => {
     let service = 0
     let fundNbr = parseFloat(funding)
-    let fundFee = (fundNbr * 0.02)
+    let fundFee = (fundNbr * 0.01)
     let dayNbr = parseFloat(duration)
     if (bump == 1) {
       service = 0.05
@@ -214,6 +217,28 @@ export default function Home() {
     calcServicesFees(bumpPackage, funding, duration)
   }, [bumpPackage, funding, duration])
 
+  const calcServicesFeesUI = (bump: number, duration: string) => {
+    let service = 0
+    let dayNbr = parseFloat(duration)
+    if (bump == 1) {
+      service = 0.05
+    } else if (bump == 2) {
+      service = 0.1
+    } else if (bump == 3) {
+      service = 0.2
+    } else {
+      service == 0
+    }
+    let totalfee = (service * dayNbr)
+    let feeReturn = formatFee(totalfee)
+    setServiceFeeUI(feeReturn)
+    return <span>{feeReturn} SOL</span>
+  }
+
+  useEffect(() => {
+    calcServicesFeesUI(bumpPackage, duration)
+  }, [bumpPackage, duration])
+
   const calcTotal = (funding: string, serviceFee: number) => {
     let fundNbr = parseFloat(funding)
     if (funding == '') {
@@ -230,6 +255,23 @@ export default function Home() {
   useEffect(() => {
     calcTotal(funding, serviceFee)
   }, [funding, serviceFee])
+
+  const calcTotalUI = (funding: string, serviceFee: number) => {
+    let fundNbr = parseFloat(funding)
+    if (funding == '') {
+      setTotalPrice(0)
+      return 0
+    } else {
+      let total = (fundNbr + serviceFeeUI)
+      let totalReturn = formatFee(total)
+      setTotalPriceUI(totalReturn)
+      return { totalReturn }
+    }
+  }
+
+  useEffect(() => {
+    calcTotalUI(funding, serviceFeeUI)
+  }, [funding, serviceFeeUI])
 
   const ConnectModalRef = useRef<ConnectModalRefType>(null)
   const [isConnectModalOpen, setConnectModalOpen] = useState(false)
@@ -608,7 +650,7 @@ export default function Home() {
                       <div className='flex'>
                         <span className='text-[#FFF] font-[400] text-sm'>Services</span>
                         <div className='relative'>
-                          {QModalTokenOpen4 && <QModal text='The price of your choosen package per day + 2% of your bots funding.' w={160} />}
+                          {QModalTokenOpen4 && <QModal text='The price of your choosen package per day + 1% of your bots funding.' w={160} />}
                           <svg
                             onMouseEnter={() => setQModalOpen4(true)}
                             onMouseLeave={() => setQModalOpen4(false)}
@@ -618,11 +660,11 @@ export default function Home() {
                         </div>
                       </div>
                       <div className='flex'>
-                        <span className='text-red text-sm'>{Number.isNaN(serviceFee) ? 'Not Set' : <>{serviceFee} SOL</>}</span>
+                        <span className='text-red text-sm'>{Number.isNaN(serviceFee) ? 'Not Set' : <>{serviceFeeUI} SOL</>}</span>
                       </div>
                     </div>
                     <div id='total'>
-                      {Number.isNaN(totalPrice) ? null : <>
+                      {Number.isNaN(totalPriceUI) ? null : <>
                         <div className='py-2'>
                           <div className='border-t-[1px] border-[#FFFFFF1A]' />
                         </div>
@@ -631,7 +673,7 @@ export default function Home() {
                             <span className='text-[#FFF] font-[600] text-sm'>Total:</span>
                           </div>
                           <div className='flex'>
-                            <span className='text-red text-sm'>{totalPrice} SOL</span>
+                            <span className='text-red text-sm'>{totalPriceUI} SOL</span>
                           </div>
                         </div>
                       </>}

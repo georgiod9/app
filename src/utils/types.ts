@@ -58,3 +58,5 @@ export type ConnectModalRefType = HTMLDivElement | null
 export type BumpModalRefType = HTMLDivElement | null
 
 export type OrderStateModalRefType = HTMLDivElement | null
+
+export type HowItWorksModalRefType = HTMLDivElement | null
