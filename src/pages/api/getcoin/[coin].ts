@@ -8,7 +8,7 @@ interface Coin {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
         const { coin } = req.query as Coin
-        const pumpfunApi = `https://client-api-2-74b1891ee9f9.herokuapp.com/coins/${coin}`
+        const pumpfunApi = `https://frontend-api.pump.fun/coins/${coin}`
         const response = await axios.get(pumpfunApi)
         const coinData = response.data
         res.status(200).json({ coinData })

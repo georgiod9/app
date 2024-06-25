@@ -17,6 +17,8 @@ export const RPC = 'https://lingering-damp-lambo.solana-mainnet.quiknode.pro/41c
 //export const RPC = 'https://api.devnet.solana.com'
 
 export const SOLANA = new solWeb3.Connection(RPC, 'confirmed');
-export const PROGRAM_ID = '2kptyUB75N4fZE7FfkMpC1qxoM6VWJ26HN95QFDgN9P4';
-export const ACCOUNT_BOT_PK = '3KW9UmB16bpCE7qayxgixXj43vXVqAwEZp5aeFxNSyGU'
-export const ACCOUNT_PROTOCOL_PK = 'sr8S4uYAcCvgDWBr1QHsTNU5ftf8NR4JakSb7QShBUh' 
+export const PROGRAM_ID = 'EJPQnTwg1soxB1qpYMh4B2ZRcgfVdUMghKbuH95kKLa1';
+export const ACCOUNT_BOT_PK = '3zzeM1CvroTufypUduFM1t1DvPkJwNJ7BQZHz7PoKJwJ'
+export const ACCOUNT_PROTOCOL_PK = 'G7h3rWk1LturxFKJrzE1723LGpc6FezVwKQGTkjTmxzt'
+export const ACCOUNT_PROTOCOL_PK_dev = 'GH3AJux7zicopHnSCSHwgxhMaNeVLzUgxTNqCxS4LsRy'
+
